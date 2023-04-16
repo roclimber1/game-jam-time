@@ -1,14 +1,16 @@
 
 body {
   margin: 0;
-  font-family: 'Press Start 2P', cursive;
   font-size: 2em;
   color: white;
 }
 
-
-#score {
+#score, #control-panel {
   position: absolute;
   top: 20px;
   right: 20px;
+}
+
+#control-panel {
+  top: 60px;
 }

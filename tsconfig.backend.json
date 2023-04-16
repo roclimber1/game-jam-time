@@ -1,13 +1,16 @@
 {
     "compilerOptions": {
-      "outDir": "dist/backend/",
-      "target": "es2016",
-      "module": "commonjs",
-      "esModuleInterop": true,
-      "forceConsistentCasingInFileNames": true,
-      "strict": true,
-      "skipLibCheck": true
+        "outDir": "dist/",
+        "target": "es2016",
+        "module": "commonjs",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "skipLibCheck": true,
+        "paths": {
+            "@/*": ["./*"]
+        }
     },
-    "include": ["backend/**/*.ts"],
+    "include": ["backend/**/*.ts", "common/**/*.ts"],
     "exclude": ["node_modules", "scr/**/*"]
-  }
+}

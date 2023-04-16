@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start-front": "parcel",
+    "build-dev-front": "parcel build",
     "build-front": "parcel build --no-source-maps",
     "build": "npx tsc -p ./tsconfig.backend.json",
     "watch": "npx tsc -p ./tsconfig.backend.json --watch",
@@ -26,6 +27,8 @@
   "dependencies": {
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
+    "socket.io": "^4.6.1",
+    "socket.io-client": "^4.6.1",
     "three": "^0.151.3"
   },
   "devDependencies": {
@@ -35,6 +38,7 @@
     "@types/three": "^0.150.1",
     "@typescript-eslint/eslint-plugin": "^5.58.0",
     "@typescript-eslint/parser": "^5.58.0",
+    "buffer": "^5.7.1",
     "concurrently": "^8.0.1",
     "eslint": "^8.38.0",
     "eslint-plugin-jsdoc": "^41.1.1",
