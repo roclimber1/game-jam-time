@@ -13,3 +13,13 @@ npm run start
 ```sh
 npm run build
 ```
+
+### Docker
+
+```sh
+# build docker
+docker build -f ./docker/Dockerfile -t game-jam-time .
+
+# run docker
+docker run -p 0.0.0.0:8080:8080 -d game-jam-time
+```
