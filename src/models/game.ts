@@ -3,9 +3,18 @@ import * as THREE from 'three'
 
 
 import Tree from './tree'
-import Tile from './tile'
+import Mushroom from './mushroom'
 
-import Color from './color'
+import Item from './item'
+import Field from './field'
+import Boulder from './boulder'
+
+
+
+type RenderItemsParameters<Type> = {
+    amount: number,
+    item: Type
+}
 
 
 
@@ -22,9 +31,6 @@ class Game {
 
     constructor() {
 
-        // const counterDOM = document.getElementById('score')
-
-
         this.scene = new THREE.Scene()
 
         this.renderer = this.initRenderer()
@@ -34,6 +40,9 @@ class Game {
 
         this.renderField()
         this.renderTrees()
+
+        this.renderMushrooms()
+        this.renderBoulders()
 
 
         this.renderer.render(this.scene, this.camera)
@@ -94,7 +103,6 @@ class Game {
 
         dirLight.position.set(initialDirLightPositionX, initialDirLightPositionY, 200)
         dirLight.castShadow = true
-        // dirLight.target = unit
 
         this.scene.add(dirLight)
 
@@ -135,44 +143,66 @@ class Game {
     }
 
 
+    private renderItems<Type extends Item>(parameters: RenderItemsParameters<Type>): void {
+
+        const { amount, item } = parameters
+
+
+        for (let i = 0; i < amount; i++) {
+
+            const objectItem = item.render()
+
+            objectItem.position.x = this.getRandomPosition(window.innerWidth)
+            objectItem.position.y = this.getRandomPosition(window.innerHeight)
+
+            this.scene.add(objectItem)
+        }
+    }
+
+
     private renderTrees(): void {
 
         const amount = 50
 
 
-        for (let i = 0; i < amount; i++) {
+        this.renderItems({
+            amount,
+            item: new Tree(Game.zoom)
+        })
+    }
 
-            const tree = new Tree(Game.zoom).render()
 
-            tree.position.x = this.getRandomPosition(window.innerWidth)
-            tree.position.y = this.getRandomPosition(window.innerHeight)
+    private renderMushrooms(): void {
 
-            this.scene.add(tree)
-        }
+        const amount = 30
+
+
+        this.renderItems({
+            amount,
+            item: new Mushroom(Game.zoom)
+        })
+    }
+
+
+    private renderBoulders(): void {
+
+        const amount = 100
+
+
+        this.renderItems({
+            amount,
+            item: new Boulder(Game.zoom)
+        })
     }
 
 
     public renderField(): void {
 
-        [-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9].forEach((index) => {
+        const field: THREE.Group = new Field(Game.zoom).render()
 
+        field.rotateZ(Math.PI / 3)
 
-            const sign: number = this.getRandomSign()
-
-
-            const isGrass = (sign > 0)
-
-            const colors = isGrass ? undefined : Color.tiles
-            const ratio = isGrass ? undefined : 1
-
-            const tile = new Tile(Game.zoom).render(colors, ratio)
-
-            tile.position.y = index * Tile.positionWidth * Game.zoom
-
-            this.scene.add( tile )
-
-        })
-
+        this.scene.add(field)
     }
 
 }

@@ -8,6 +8,8 @@ class Color {
     static grass: Array<number> = [0xbaf455, 0x99C846]
     static tiles: Array<number> = [0x885600, 0x967132]
 
+    static boulders: Array<number> = [0xffc898, 0xfffbc3]
+
 
     constructor() {
         //

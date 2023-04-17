@@ -3,55 +3,54 @@ import * as THREE from 'three'
 
 
 import Color from './color'
+import Item from './item'
 
 
 
-class Tile {
+class Tile extends Item {
 
+    static positions: Array<number> = [-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9]
 
-    static positionWidth = 42
+    static positionWidth = 65
+
     static columns = 17
-
     static boardWidth: number = Tile.positionWidth * Tile.columns
 
 
-    constructor(private zoom: number) {
-        //
-    }
+    static rows = 33
+    static boardHeight: number = Tile.positionWidth * Tile.rows
+
+
+    static space = 1
 
 
 
     private createSection(color: number, ratio: number): THREE.Mesh {
 
         return new THREE.Mesh(
-            new THREE.BoxBufferGeometry( Tile.boardWidth * this.zoom, Tile.positionWidth * this.zoom, ratio * this.zoom ),
+            new THREE.BoxGeometry( Tile.positionWidth * this.zoom, Tile.positionWidth * this.zoom, ratio * this.zoom ),
             new THREE.MeshPhongMaterial( { color } )
         )
     }
 
 
-    render(colors: Array<number> = Color.grass, ratio = 3): THREE.Group {
+    render(colors: Array<number> = Color.grass, ratio = 5): THREE.Group {
 
         const grass: THREE.Group = new THREE.Group()
 
-        const color: number = Color.getRandomColor(colors)
-        const middle: THREE.Mesh = this.createSection(color, ratio)
 
-        middle.receiveShadow = true
-        grass.add(middle)
+        let color: number
 
+        Tile.positions.forEach((index) => {
 
-        const left: THREE.Mesh = this.createSection(color, ratio)
+            color = this.getRandomColor(colors)
+            const section: THREE.Mesh = this.createSection(color, ratio)
 
-        left.position.x = - Tile.boardWidth * this.zoom
-        grass.add(left)
+            section.position.x = index * (Tile.positionWidth * this.zoom + Tile.space * this.zoom)
+            section.receiveShadow = true
 
-        const right: THREE.Mesh = this.createSection(color, ratio)
-
-        right.position.x = Tile.boardWidth * this.zoom
-        grass.add(right)
-
-        grass.position.z = 1.5 * this.zoom
+            grass.add(section)
+        })
 
 
         return grass

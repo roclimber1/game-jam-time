@@ -44,10 +44,6 @@
     "eslint-plugin-jsdoc": "^41.1.1",
     "nodemon": "^2.0.22",
     "parcel": "^2.8.3",
-    "parcel-reporter-static-files-copy": "^1.5.0",
     "typescript": "^5.0.4"
-  },
-  "staticFiles": {
-    "staticPath": "src/assets"
   }
 }
