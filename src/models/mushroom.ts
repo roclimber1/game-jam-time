@@ -2,35 +2,33 @@
 import * as THREE from 'three'
 
 
+import Tree from './tree'
 import Item from './item'
 
 
 
 
-class Tree extends Item {
 
-    static threeHeights: Array<number> = [20, 30, 35, 40, 45, 55, 60, 70]
-    static threeWidths: Array<number> = [25, 30, 35, 40, 45, 50]
-
-    static trunkWidth = 10
+class Mushroom extends Item {
 
 
 
     public render(): THREE.Group {
 
-        const tree: THREE.Group = new THREE.Group()
+        const mushroom: THREE.Group = new THREE.Group()
 
 
         const trunk: THREE.Mesh = new THREE.Mesh(
-            new THREE.BoxGeometry( Tree.trunkWidth * this.zoom, Tree.trunkWidth * this.zoom, 20 * this.zoom ),
+            new THREE.CylinderGeometry( Tree.trunkWidth * this.zoom, Tree.trunkWidth * this.zoom, 20 * this.zoom ),
             new THREE.MeshPhongMaterial( { color: 0x4d2926, flatShading: true } )
         )
 
         trunk.position.z = 10 * this.zoom
+        trunk.rotation.x = Math.PI / 2
         trunk.castShadow = true
         trunk.receiveShadow = true
 
-        tree.add(trunk)
+        mushroom.add(trunk)
 
         const height: number = this.getRandomHeight()
         const width: number = this.getRandomWidth()
@@ -39,21 +37,22 @@ class Tree extends Item {
 
 
         const crown: THREE.Mesh = new THREE.Mesh(
-            new THREE.BoxGeometry( width * this.zoom, width * this.zoom, height * this.zoom ),
+            new THREE.CylinderGeometry( width * this.zoom, width * this.zoom, height * this.zoom ),
             new THREE.MeshLambertMaterial( { color, flatShading: true } )
         )
 
         crown.position.z = (height / 2 + 20) * this.zoom
+        crown.rotation.x = Math.PI / 2
         crown.castShadow = true
         crown.receiveShadow = false
 
-        tree.add(crown)
+        mushroom.add(crown)
 
 
-        return tree
+        return mushroom
     }
 }
 
 
 
-export default Tree
+export default Mushroom
