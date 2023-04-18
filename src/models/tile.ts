@@ -25,7 +25,7 @@ class Tile extends Item {
 
 
 
-    private createSection(color: number, ratio: number): THREE.Mesh {
+    public createSection(color: number, ratio: number): THREE.Mesh {
 
         return new THREE.Mesh(
             new THREE.BoxGeometry( Tile.positionWidth * this.zoom, Tile.positionWidth * this.zoom, ratio * this.zoom ),
@@ -34,26 +34,13 @@ class Tile extends Item {
     }
 
 
-    render(colors: Array<number> = Color.grass, ratio = 5): THREE.Group {
+    public render(colors: Array<number> = Color.grass, ratio = 5): THREE.Mesh {
 
-        const grass: THREE.Group = new THREE.Group()
-
-
-        let color: number
-
-        Tile.positions.forEach((index) => {
-
-            color = this.getRandomColor(colors)
-            const section: THREE.Mesh = this.createSection(color, ratio)
-
-            section.position.x = index * (Tile.positionWidth * this.zoom + Tile.space * this.zoom)
-            section.receiveShadow = true
-
-            grass.add(section)
-        })
+        const color: number = this.getRandomColor(colors)
+        const section: THREE.Mesh = this.createSection(color, ratio)
 
 
-        return grass
+        return section
     }
 }
 
