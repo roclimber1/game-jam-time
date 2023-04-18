@@ -7,13 +7,13 @@ import WebSocketClient from './models/web_socket_client'
 
 
 
-new Game()
+const game: Game = new Game()
 
 
-const webSocket = new WebSocketClient()
+const webSocket: WebSocketClient = new WebSocketClient()
 
 
 
-const connector = new Connector(webSocket)
+const connector: Connector = new Connector(webSocket)
 
-const controlPanel = new ControlPanel(connector)
+const controlPanel: ControlPanel = new ControlPanel(connector)
