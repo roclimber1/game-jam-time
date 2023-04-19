@@ -6,12 +6,13 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start-front": "parcel",
-    "build-dev-front": "parcel build",
+    "clean": "rimraf ./dist",
+    "build-dev-front": "npm run clean && parcel build",
     "build-front": "parcel build --no-source-maps",
     "build": "npx tsc -p ./tsconfig.backend.json",
     "watch": "npx tsc -p ./tsconfig.backend.json --watch",
-    "start": "node dist/backend/index.js",
-    "nodemon": "nodemon -q dist/backend/index.js",
+    "start": "node dist-server/backend/index.js",
+    "nodemon": "nodemon -q dist-server/backend/index.js",
     "dev": "concurrently \"npm run watch\" \"npm run nodemon\""
   },
   "repository": {
@@ -44,6 +45,7 @@
     "eslint-plugin-jsdoc": "^41.1.1",
     "nodemon": "^2.0.22",
     "parcel": "^2.8.3",
+    "rimraf": "^5.0.0",
     "typescript": "^5.0.4"
   }
 }
