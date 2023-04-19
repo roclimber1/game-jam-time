@@ -11,6 +11,8 @@ class Tile extends Item {
 
     static positions: Array<number> = [-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9]
 
+    static lastIndex: number = Math.abs(Tile.positions[0])
+
     static positionWidth = 65
 
     static columns = 17

@@ -56,7 +56,7 @@ class Item {
     }
 
 
-    public render(): any {
+    public render(data?: any): any {
 
         return null
     }

@@ -11,10 +11,17 @@ import Item from './item'
 import Field from './field'
 import Boulder from './boulder'
 
+import Color from './color'
+import Unit from './unit'
+
+
+
+import type { GridCell } from './field'
+
+
 
 
 type RenderItemsParameters<Type> = {
-    amount: number,
     item: Type
 }
 
@@ -34,24 +41,32 @@ class Game {
 
     private controls: OrbitControls
 
+    private unit: THREE.Group
+
 
     static zoom = 2
 
 
     constructor() {
 
+
         this.scene = new THREE.Scene()
 
         this.renderer = this.initRenderer()
         this.camera = this.initCamera()
 
+
         this.initLight()
 
+
         this.renderField()
+
+
+        this.unit = this.renderUnits()
+
         this.renderTrees()
-
-
         this.renderBoulders()
+
 
 
         this.rayCaster = new THREE.Raycaster()
@@ -91,7 +106,7 @@ class Game {
     }
 
 
-    private previous: THREE.Object3D = null
+    private previous: THREE.Object3D
 
 
     public render() {
@@ -113,9 +128,15 @@ class Game {
 
                 this.previous = intersects[0].object
 
-                this.previous.currentHex = this.previous.material.emissive.getHex()
-                this.previous.material.emissive.setHex( 0xff6969 )
 
+                const tile: GridCell = Field.getTileByUuid(intersects[0].object.uuid)
+
+
+                console.debug('🚀 ~ file: game.ts:134 ~ render ~ tile:', tile)
+
+
+                this.previous.currentHex = this.previous.material.emissive.getHex()
+                this.previous.material.emissive.setHex( Color.selection )
             }
 
         } else {
@@ -186,12 +207,7 @@ class Game {
     }
 
 
-    private initLight(): void {
-
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6)
-
-        this.scene.add(hemiLight)
-
+    private addDirectionalLight(target: THREE.Object3D): void {
 
         const initialDirLightPositionX = -100
         const initialDirLightPositionY = -100
@@ -200,6 +216,7 @@ class Game {
 
         dirLight.position.set(initialDirLightPositionX, initialDirLightPositionY, 200)
         dirLight.castShadow = true
+        dirLight.target = target
 
         this.scene.add(dirLight)
 
@@ -216,7 +233,14 @@ class Game {
 
         dirLight.position.x = initialDirLightPositionX
         dirLight.position.y = initialDirLightPositionY
+    }
 
+
+    private initLight(): void {
+
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6)
+
+        this.scene.add(hemiLight)
 
 
         const backLight = new THREE.DirectionalLight(0x000000, .4)
@@ -243,62 +267,86 @@ class Game {
 
     private renderItems<Type extends Item>(parameters: RenderItemsParameters<Type>): void {
 
-        const { amount, item } = parameters
+        const { item } = parameters
 
 
-        for (let i = 0; i < amount; i++) {
+        for (const i in Field.grid) {
 
-            const objectItem = item.render()
+            const gridCell: GridCell = Field.grid[i]
 
-            objectItem.position.x = this.getRandomPosition(window.innerWidth)
-            objectItem.position.y = this.getRandomPosition(window.innerHeight)
+            const odds: boolean = (this.getRandomSign() + this.getRandomSign()) > 1
 
-            this.scene.add(objectItem)
+
+            if (odds && !gridCell.occupied) {
+
+                const objectItem = item.render()
+
+                objectItem.position.x = gridCell.centreX
+                objectItem.position.y = gridCell.centreY
+
+                Field.grid[i].occupied = true
+
+                this.scene.add(objectItem)
+
+            }
         }
     }
 
 
     private renderTrees(): void {
 
-        const amount = 50
-
 
         this.renderItems({
-            amount,
             item: new Tree(Game.zoom)
         })
     }
 
 
-    private renderMushrooms(): void {
 
-        const amount = 30
+    private renderBoulders(): void {
 
 
         this.renderItems({
-            amount,
-            item: new Mushroom(Game.zoom)
+            item: new Boulder(Game.zoom)
         })
     }
 
 
-    private renderBoulders(): void {
+    private addUnit(gridCell: GridCell, color: number): THREE.Group {
 
-        const amount = 100
+        const unit: THREE.Group = new Unit(Game.zoom).render({ color })
+
+        unit.position.x = gridCell?.centreX
+        unit.position.y = gridCell?.centreY
+
+        gridCell.occupied = true
+
+        this.scene.add(unit)
 
 
-        this.renderItems({
-            amount,
-            item: new Boulder(Game.zoom)
-        })
+        return unit
+    }
+
+
+    public renderUnits(): THREE.Group {
+
+        const unitN1: THREE.Group = this.addUnit(Field.getStartTile(), Color.units[0])
+
+        this.addDirectionalLight(unitN1)
+
+
+
+        const unitN2: THREE.Group = this.addUnit(Field.getStartTile(-1), Color.units[1])
+
+        this.addDirectionalLight(unitN2)
+
+        return unitN2
     }
 
 
     public renderField(): void {
 
         const field: THREE.Group = new Field(Game.zoom).render()
-
-        field.rotateZ(Math.PI / 3)
 
         this.scene.add(field)
     }

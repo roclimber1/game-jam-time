@@ -10,6 +10,14 @@ class Color {
 
     static boulders: Array<number> = [0xffc898, 0xfffbc3]
 
+    static units: Array<number> = [0xdfaa2f, 0xb95333]
+
+
+    static ground = 0x99C846
+
+    static selection = 0xff6969
+    static lastLine = 0x882000
+
 
     constructor() {
         //
