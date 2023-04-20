@@ -1,10 +1,13 @@
 
 import { io } from 'socket.io-client'
 
+import { MESSAGE } from '@/common/constants'
+
+
 
 
 import type { Socket } from 'socket.io-client'
-import type { AbstractConnector } from '@/src/interfaces/AbstractConnector'
+import type { AbstractConnector, Listener } from '@/src/interfaces'
 
 
 
@@ -14,20 +17,16 @@ class WebSocketClient implements AbstractConnector {
     private socket: Socket
 
 
-    constructor() {
+    constructor(listeners: Array<Listener>) {
 
         this.socket = io()
 
-        this.initListeners()
+        this.init()
+        this.initListeners(listeners)
     }
 
 
-    private initListeners(): void {
-
-        this.socket.on('connect', () => {
-
-            console.debug('connected to webSocket server')
-        })
+    private init(): void {
 
         this.socket.on('disconnect', (reason) => {
 
@@ -47,17 +46,29 @@ class WebSocketClient implements AbstractConnector {
     }
 
 
+
+    private initListeners(listeners: Array<Listener>): void {
+
+        for (const listener of listeners) {
+
+            const { type, callback } = listener
+
+            this.socket.on(type, callback)
+        }
+    }
+
+
     public checkConnection(): boolean {
 
         return this.socket.connected
     }
 
 
-    public sendMessage(message: string): void {
+    public sendData<Data = any>(data: Data, type: MESSAGE): void {
 
         if (this.checkConnection()) {
 
-            this.socket.emit('chat message', { message })
+            this.socket.emit(type, data)
         }
     }
 }
