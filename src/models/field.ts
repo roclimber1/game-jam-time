@@ -6,17 +6,14 @@ import Color from './color'
 import Item from './item'
 import Tile from './tile'
 
+import { ITEM } from '../../common/constants'
 
-export type GridCell = {
-    centreX: number,
-    centreY: number,
-    id: string,
-    indexX: number,
-    indexY: number,
-    object: THREE.Object3D,
-    occupied: boolean,
-    position: THREE.Vector3
-}
+
+
+import type { GridCell } from '../../common/interfaces'
+
+
+
 
 
 class Field extends Item {
@@ -61,7 +58,7 @@ class Field extends Item {
 
 
 
-    private renderLine(colors: Array<number> = Color.grass, positionY = 0, indexY: number, ratio = Field.ratio): THREE.Group {
+    private renderLine(indexY: number, colors: Array<number> = Color.grass, positionY = 0, ratio = Field.ratio): THREE.Group {
 
         const grass: THREE.Group = new THREE.Group()
 
@@ -73,7 +70,7 @@ class Field extends Item {
             color = this.getRandomColor(colors)
             const section: THREE.Mesh = this.tile.createSection(color, ratio)
 
-            const positionX = index * (Tile.positionWidth * this.zoom + Tile.space * this.zoom)
+            const positionX: number = index * (Tile.positionWidth * this.zoom + Tile.space * this.zoom)
 
             section.position.x = positionX
             section.receiveShadow = true
@@ -87,7 +84,8 @@ class Field extends Item {
                 indexY,
                 object: section,
                 occupied: false,
-                position: new THREE.Vector3(positionX, positionY, 0)
+                position: new THREE.Vector3(positionX, positionY, 0),
+                type: ITEM.EMPTY
             })
 
             grass.add(section)
@@ -117,13 +115,15 @@ class Field extends Item {
 
             const isLastLine: boolean = (Math.abs(index) == Tile.lastIndex)
 
-            const isGrass = (sign > 0)
-            const colors = isGrass ? (isLastLine ? [Color.lastLine] : undefined) : Color.tiles
+            const isGrass: boolean = (sign > 0)
+
+            const grassColor: Array<number> | undefined = (isLastLine ? [Color.lastLine] : undefined)
+            const colors: Array<number> | undefined = isGrass ? grassColor : Color.tiles
 
 
-            const positionY = index * (Tile.positionWidth * this.zoom + Tile.space * this.zoom)
+            const positionY: number = index * (Tile.positionWidth * this.zoom + Tile.space * this.zoom)
 
-            const tile = this.renderLine(colors, positionY, index)
+            const tile: THREE.Group = this.renderLine(index, colors, positionY)
 
 
             field.add( tile )

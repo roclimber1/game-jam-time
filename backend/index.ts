@@ -9,8 +9,7 @@ import dotenv from 'dotenv'
 import { join as joinPath } from 'path'
 
 
-
-import type { ChatMessage } from '@/common/interfaces/main'
+import WebSocketServer from './web_socket_server'
 
 
 
@@ -27,7 +26,7 @@ const io: Server = new Server(server)
 
 app.get('/', (request: Request, response: Response) => {
 
-    response.sendFile(joinPath(__dirname, '../index.html'))
+    response.sendFile(joinPath(__dirname, '../../dist/index.html'))
 })
 
 
@@ -35,24 +34,8 @@ app.use(express.static('dist'))
 
 
 
+new WebSocketServer(io)
 
-io.on('connection', (socket) => {
-
-    console.debug('socket > a user connected', socket.id)
-
-
-    socket.on('disconnect', () => {
-
-        console.log('user disconnected')
-    })
-
-    socket.on('chat message', (data: ChatMessage) => {
-
-        const { message } = data
-
-        console.log('message: ' + message)
-    })
-})
 
 
 server.listen(port, () => {

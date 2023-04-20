@@ -12,16 +12,23 @@ import Field from './field'
 import Boulder from './boulder'
 
 import Color from './color'
+import Tile from './tile'
 import Unit from './unit'
 
 
+import Connector from './connector'
 
-import type { GridCell } from './field'
+import { CUSTOM_EVENT } from '../constants'
+
+
+
+import type { GridCell } from '@/common/interfaces'
 
 
 
 
 type RenderItemsParameters<Type> = {
+    // amount: number,
     item: Type
 }
 
@@ -35,19 +42,27 @@ class Game {
     private renderer: THREE.WebGLRenderer
 
 
-    private rayCaster: THREE.Raycaster
-    private pointer: THREE.Vector2
+    private rayCaster!: THREE.Raycaster
+    private pointer!: THREE.Vector2
 
 
     private controls: OrbitControls
 
-    private unit: THREE.Group
+    private unit!: THREE.Group
+
+    private mapInitialized = false
+
+
+    private previous: THREE.Object3D | null = null
+
 
 
     static zoom = 2
 
 
-    constructor() {
+    constructor(private connector: Connector) {
+
+        // const counterDOM = document.getElementById('score')
 
 
         this.scene = new THREE.Scene()
@@ -62,18 +77,59 @@ class Game {
         this.renderField()
 
 
-        this.unit = this.renderUnits()
-
-        this.renderTrees()
-        this.renderBoulders()
+        this.initMap()
 
 
-
-        this.rayCaster = new THREE.Raycaster()
-        this.pointer = new THREE.Vector2()
 
         this.initRayCaster()
 
+
+
+        this.initResizeListener()
+
+
+        this.controls = new OrbitControls(this.camera, this.renderer.domElement)
+
+        this.renderer.setAnimationLoop(this.render.bind(this))
+
+
+        this.renderer.render(this.scene, this.camera)
+    }
+
+
+    private initMap() {
+
+        document.addEventListener(CUSTOM_EVENT.CONNECT, () => {
+
+            this.connector.initMap({ grid: Field.grid })
+
+
+            if (!this.mapInitialized) {
+
+                this.unit = this.renderUnits()
+
+                this.renderTrees()
+                // this.renderMushrooms()
+                this.renderBoulders()
+
+
+                this.mapInitialized = true
+            }
+        })
+
+
+        document.addEventListener(CUSTOM_EVENT.SET_MAP, (event) => {
+
+            const { data } = (event as CustomEvent)?.detail || {}
+
+
+            console.debug('🚀 ~ file: game.ts:124 ~ document.addEventListener ~ data:', data)
+        })
+
+    }
+
+
+    private initResizeListener() {
 
 
         window.addEventListener('resize', () => {
@@ -88,14 +144,6 @@ class Game {
 
             this.renderer.setSize(innerWidth, innerHeight)
         })
-
-
-        this.controls = new OrbitControls(this.camera, this.renderer.domElement)
-
-        this.renderer.setAnimationLoop(this.render.bind(this))
-
-
-        this.renderer.render(this.scene, this.camera)
     }
 
 
@@ -104,9 +152,6 @@ class Game {
         this.pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1
         this.pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1
     }
-
-
-    private previous: THREE.Object3D
 
 
     public render() {
@@ -128,6 +173,7 @@ class Game {
 
                 this.previous = intersects[0].object
 
+                // console.debug('🚀 ~ file: game.ts:120 ~ Game ~ render ~ intersects[0].object:', intersects[0].object.position)
 
                 const tile: GridCell = Field.getTileByUuid(intersects[0].object.uuid)
 
@@ -156,6 +202,9 @@ class Game {
 
 
     private initRayCaster() {
+
+        this.rayCaster = new THREE.Raycaster()
+        this.pointer = new THREE.Vector2()
 
         const onPointerMove = (event: MouseEvent) => this.onPointerMove(event)
 
@@ -187,6 +236,7 @@ class Game {
 
         const distance = 500 * Game.zoom
 
+        // const camera = new THREE.OrthographicCamera( window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, 0.1, 10000 )
 
         const aspectRatio = window.innerWidth / window.innerHeight
         const camera = new THREE.PerspectiveCamera(35, aspectRatio, 1, 10000 )
@@ -243,6 +293,16 @@ class Game {
         this.scene.add(hemiLight)
 
 
+        // this.addDirectionalLight(this.unit)
+
+
+        // const helper1 = new THREE.CameraHelper( dirLight.shadow.camera )
+        // const helper2 = new THREE.CameraHelper( this.camera )
+
+        // this.scene.add(helper1)
+        // this.scene.add(helper2)
+
+
         const backLight = new THREE.DirectionalLight(0x000000, .4)
 
         backLight.position.set(200, 200, 50)
@@ -257,18 +317,22 @@ class Game {
         return Math.round(Math.random()) ? 1 : -1
     }
 
-    private getRandomPosition(value: number): number {
+    // private getRandomPosition(value: number): number {
 
-        const sign: number = this.getRandomSign()
+    //     const sign: number = this.getRandomSign()
 
-        return Math.floor(sign * Math.random() * value)
-    }
+    //     return Math.floor(sign * Math.random() * value)
+    // }
 
 
     private renderItems<Type extends Item>(parameters: RenderItemsParameters<Type>): void {
 
         const { item } = parameters
 
+        // amount,
+
+
+        // for (let i = 0; i < amount; i++) {
 
         for (const i in Field.grid) {
 
@@ -281,13 +345,17 @@ class Game {
 
                 const objectItem = item.render()
 
-                objectItem.position.x = gridCell.centreX
-                objectItem.position.y = gridCell.centreY
+                objectItem.position.x = gridCell.centreX // + this.getRandomPosition(Tile.positionWidth / 2)
+                objectItem.position.y = gridCell.centreY // + this.getRandomPosition(Tile.positionWidth / 2)
 
                 Field.grid[i].occupied = true
 
                 this.scene.add(objectItem)
 
+            } else {
+
+                // objectItem.position.x = this.getRandomPosition(window.innerWidth)
+                // objectItem.position.y = this.getRandomPosition(window.innerHeight)
             }
         }
     }
@@ -295,18 +363,35 @@ class Game {
 
     private renderTrees(): void {
 
+        // const amount = 50
+
 
         this.renderItems({
+            // amount,
             item: new Tree(Game.zoom)
         })
     }
 
 
+    private renderMushrooms(): void {
 
-    private renderBoulders(): void {
+        // const amount = 30
 
 
         this.renderItems({
+            // amount,
+            item: new Mushroom(Game.zoom)
+        })
+    }
+
+
+    private renderBoulders(): void {
+
+        // const amount = 100
+
+
+        this.renderItems({
+            // amount,
             item: new Boulder(Game.zoom)
         })
     }

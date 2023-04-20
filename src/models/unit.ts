@@ -40,7 +40,7 @@ class Unit extends Item {
         unit.add(body)
 
         const rowel: THREE.Mesh = new THREE.Mesh(
-            new THREE.BoxGeometry( 2 * this.zoom, 4 * this.zoom, 2 * this.zoom ),
+            new THREE.BoxGeometry( 2 * this.zoom, 2 * this.zoom, 6 * this.zoom ),
             new THREE.MeshLambertMaterial( { color: 0x000000, flatShading: true } )
         )
 
@@ -48,7 +48,24 @@ class Unit extends Item {
         rowel.castShadow = true
         rowel.receiveShadow = false
 
+
         unit.add(rowel)
+
+
+
+        const rowel2: THREE.Mesh = rowel.clone()
+
+        rowel2.position.y += (size * this.zoom) / 4
+
+        unit.add(rowel2)
+
+
+
+        const rowel3: THREE.Mesh = rowel.clone()
+
+        rowel3.position.y -= (size * this.zoom) / 4
+
+        unit.add(rowel3)
 
 
         return unit
