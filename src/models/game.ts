@@ -12,13 +12,13 @@ import Field from './field'
 import Boulder from './boulder'
 
 import Color from './color'
-import Tile from './tile'
 import Unit from './unit'
 
 
 import Connector from './connector'
 
 import { CUSTOM_EVENT } from '../constants'
+import { ITEM } from '../../common/constants'
 
 
 
@@ -28,7 +28,6 @@ import type { GridCell } from '@/common/interfaces'
 
 
 type RenderItemsParameters<Type> = {
-    // amount: number,
     item: Type
 }
 
@@ -62,9 +61,6 @@ class Game {
 
     constructor(private connector: Connector) {
 
-        // const counterDOM = document.getElementById('score')
-
-
         this.scene = new THREE.Scene()
 
         this.renderer = this.initRenderer()
@@ -76,22 +72,16 @@ class Game {
 
         this.renderField()
 
-
         this.initMap()
 
 
-
         this.initRayCaster()
-
-
 
         this.initResizeListener()
 
 
         this.controls = new OrbitControls(this.camera, this.renderer.domElement)
-
         this.renderer.setAnimationLoop(this.render.bind(this))
-
 
         this.renderer.render(this.scene, this.camera)
     }
@@ -101,20 +91,9 @@ class Game {
 
         document.addEventListener(CUSTOM_EVENT.CONNECT, () => {
 
+            this.unit = this.renderUnits()
+
             this.connector.initMap({ grid: Field.grid })
-
-
-            if (!this.mapInitialized) {
-
-                this.unit = this.renderUnits()
-
-                this.renderTrees()
-                // this.renderMushrooms()
-                this.renderBoulders()
-
-
-                this.mapInitialized = true
-            }
         })
 
 
@@ -123,7 +102,12 @@ class Game {
             const { data } = (event as CustomEvent)?.detail || {}
 
 
-            console.debug('🚀 ~ file: game.ts:124 ~ document.addEventListener ~ data:', data)
+            if (!this.mapInitialized) {
+
+                this.renderMap(data)
+
+                this.mapInitialized = true
+            }
         })
 
     }
@@ -173,12 +157,7 @@ class Game {
 
                 this.previous = intersects[0].object
 
-                // console.debug('🚀 ~ file: game.ts:120 ~ Game ~ render ~ intersects[0].object:', intersects[0].object.position)
-
                 const tile: GridCell = Field.getTileByUuid(intersects[0].object.uuid)
-
-
-                console.debug('🚀 ~ file: game.ts:134 ~ render ~ tile:', tile)
 
 
                 this.previous.currentHex = this.previous.material.emissive.getHex()
@@ -293,16 +272,6 @@ class Game {
         this.scene.add(hemiLight)
 
 
-        // this.addDirectionalLight(this.unit)
-
-
-        // const helper1 = new THREE.CameraHelper( dirLight.shadow.camera )
-        // const helper2 = new THREE.CameraHelper( this.camera )
-
-        // this.scene.add(helper1)
-        // this.scene.add(helper2)
-
-
         const backLight = new THREE.DirectionalLight(0x000000, .4)
 
         backLight.position.set(200, 200, 50)
@@ -317,22 +286,12 @@ class Game {
         return Math.round(Math.random()) ? 1 : -1
     }
 
-    // private getRandomPosition(value: number): number {
-
-    //     const sign: number = this.getRandomSign()
-
-    //     return Math.floor(sign * Math.random() * value)
-    // }
 
 
     private renderItems<Type extends Item>(parameters: RenderItemsParameters<Type>): void {
 
         const { item } = parameters
 
-        // amount,
-
-
-        // for (let i = 0; i < amount; i++) {
 
         for (const i in Field.grid) {
 
@@ -345,17 +304,13 @@ class Game {
 
                 const objectItem = item.render()
 
-                objectItem.position.x = gridCell.centreX // + this.getRandomPosition(Tile.positionWidth / 2)
-                objectItem.position.y = gridCell.centreY // + this.getRandomPosition(Tile.positionWidth / 2)
+                objectItem.position.x = gridCell.centreX
+                objectItem.position.y = gridCell.centreY
 
                 Field.grid[i].occupied = true
 
                 this.scene.add(objectItem)
 
-            } else {
-
-                // objectItem.position.x = this.getRandomPosition(window.innerWidth)
-                // objectItem.position.y = this.getRandomPosition(window.innerHeight)
             }
         }
     }
@@ -363,11 +318,7 @@ class Game {
 
     private renderTrees(): void {
 
-        // const amount = 50
-
-
         this.renderItems({
-            // amount,
             item: new Tree(Game.zoom)
         })
     }
@@ -375,11 +326,7 @@ class Game {
 
     private renderMushrooms(): void {
 
-        // const amount = 30
-
-
         this.renderItems({
-            // amount,
             item: new Mushroom(Game.zoom)
         })
     }
@@ -387,12 +334,53 @@ class Game {
 
     private renderBoulders(): void {
 
-        // const amount = 100
-
-
         this.renderItems({
-            // amount,
             item: new Boulder(Game.zoom)
+        })
+    }
+
+
+
+    private renderMap(grid: Array<GridCell>) {
+
+        grid.forEach((cell: GridCell) => {
+
+            if (cell.occupied) {
+
+                let item
+
+                switch (cell.type) {
+
+                    case ITEM.TREE:
+                        item = new Tree(Game.zoom)
+
+                        break
+
+                    case ITEM.BOULDER:
+                        item = new Boulder(Game.zoom)
+
+                        break
+
+                    case ITEM.MUSHROOM:
+                        item = new Mushroom(Game.zoom)
+
+                        break
+
+                    default:
+
+                        break
+                }
+
+                if (item) {
+
+                    const objectItem = item.render()
+
+                    objectItem.position.x = cell.centreX
+                    objectItem.position.y = cell.centreY
+
+                    this.scene.add(objectItem)
+                }
+            }
         })
     }
 
