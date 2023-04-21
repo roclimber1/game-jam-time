@@ -12,6 +12,7 @@ export enum MESSAGE {
 export enum ITEM {
     BOULDER = 'BOULDER',
     EMPTY = 'EMPTY',
+    MUSHROOM = 'MUSHROOM',
     TREE = 'TREE',
     UNIT = 'UNIT'
 }
