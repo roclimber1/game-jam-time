@@ -91,7 +91,10 @@ class Game {
 
         document.addEventListener(CUSTOM_EVENT.CONNECT, () => {
 
-            this.unit = this.renderUnits()
+            if (!this.mapInitialized) {
+
+                this.unit = this.renderUnits()
+            }
 
             this.connector.initMap({ grid: Field.grid })
         })
@@ -176,6 +179,9 @@ class Game {
         }
 
 
+        console.debug('🚀 ~ file: game.ts:182 ~ Game ~ render ~ this.camera:', this.camera)
+
+
         this.renderer.render( this.scene, this.camera )
     }
 
@@ -213,10 +219,6 @@ class Game {
 
     private initCamera(): THREE.PerspectiveCamera {
 
-        const distance = 500 * Game.zoom
-
-        // const camera = new THREE.OrthographicCamera( window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, 0.1, 10000 )
-
         const aspectRatio = window.innerWidth / window.innerHeight
         const camera = new THREE.PerspectiveCamera(35, aspectRatio, 1, 10000 )
 
@@ -225,12 +227,10 @@ class Game {
         camera.rotation.y = 20 * Math.PI / 180
         camera.rotation.z = 10 * Math.PI / 180
 
-        const initialCameraPositionY = -Math.tan(camera.rotation.x) * distance
-        const initialCameraPositionX = Math.tan(camera.rotation.y) * Math.sqrt(distance ** 2 + initialCameraPositionY ** 2)
 
-        camera.position.y = initialCameraPositionY
-        camera.position.x = initialCameraPositionX
-        camera.position.z = distance
+        camera.position.x = 22
+        camera.position.y = -2950
+        camera.position.z = 1600
 
         return camera
     }

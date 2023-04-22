@@ -121,7 +121,7 @@ class GameRoom implements GameRoomBase {
 
                     const gridCell: GridCell = newGrid[i]
 
-                    const odds: boolean = (this.getRandomSign() + this.getRandomSign()) > 1
+                    const odds: boolean = (this.getRandomSign() + this.getRandomSign() + this.getRandomSign()) > 1.5
 
 
                     if (odds && !gridCell.occupied) {
