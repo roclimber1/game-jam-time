@@ -1,0 +1,129 @@
+
+type Point = {
+    x: number,
+    y: number
+}
+
+
+class SimpleMiniGame {
+
+    private point!: Point
+
+
+    constructor() {
+
+        this.init()
+    }
+
+
+    private removeItem(item: HTMLDivElement) {
+
+        item.remove()
+    }
+
+
+    private addItem(point: Point) {
+
+        const item: HTMLDivElement = document.createElement('div')
+
+
+        item.className = 'absolute flex justify-center'
+
+
+        const size = 144
+
+        item.style.width = size + 'px'
+        item.style.height = size + 'px'
+
+        item.style.left = Math.round(point.x - size / 2) + 'px'
+        item.style.top = Math.round(point.y - size / 2) + 'px'
+
+
+
+        item.innerHTML = `<svg
+            version="1.1"
+            id="L4"
+            xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            x="0px"
+            y="0px"
+            viewBox="0 0 100 100"
+            enable-background="new 0 0 0 0"
+            xml:space="preserve"
+        >
+            <circle
+                fill="#C2410C"
+                stroke="none"
+                cx="16"
+                cy="50"
+                r="6"
+            >
+                <animate
+                    attributeName="r"
+                    attributeType="XML"
+                    dur="1s"
+                    values="1; 15; 1"
+                    repeatCount="indefinite"
+                    begin="0.1s"
+                />
+            </circle>
+
+        </svg>`
+
+
+        document.body.appendChild(item)
+
+
+        setTimeout(() => this.removeItem(item), 2000)
+    }
+
+
+    private interval: NodeJS.Timer | null = null
+
+
+    public init() {
+
+        document.addEventListener('click', (event: MouseEvent) => {
+
+            const { clientX, clientY } = event
+
+
+            this.point = {
+                x: clientX,
+                y: clientY
+            }
+
+
+            if (this.interval) {
+
+                clearInterval(this.interval)
+
+                this.interval = null
+
+            } else {
+
+                this.interval = setInterval(() => this.addItem(this.point), 50)
+            }
+        })
+
+
+
+        document.addEventListener('mousemove', (event: MouseEvent) => {
+
+            const { clientX, clientY } = event
+
+            this.point = {
+                x: clientX,
+                y: clientY
+            }
+        })
+
+
+
+
+    }
+}
+
+
+
+export default SimpleMiniGame

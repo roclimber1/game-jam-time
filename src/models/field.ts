@@ -18,10 +18,15 @@ import type { GridCell } from '../../common/interfaces'
 
 class Field extends Item {
 
-    static grid: Array<GridCell> = []
+    public static grid: Array<GridCell> = []
 
-    private tile: Tile = new Tile(this.zoom)
+    public tile: Tile = new Tile(this.zoom)
 
+    public positions: Array<number> = Tile.positions
+    public positionWidth: number = Tile.positionWidth
+
+    public space: number = Tile.space
+    public static lastIndex: number = Tile.lastIndex
 
     static groundUuid: string
     static ratio = 5
@@ -51,32 +56,32 @@ class Field extends Item {
 
     static getStartTile(sign = 1): GridCell {
 
-        const tile: GridCell = Field.grid.find(cell => (cell.indexX == 0) && (cell.indexY == sign * Tile.lastIndex)) as GridCell
+        const tile: GridCell = Field.grid.find(cell => (cell.indexX == 0) && (cell.indexY == sign * Field.lastIndex)) as GridCell
 
         return tile
     }
 
 
 
-    private renderLine(indexY: number, colors: Array<number> = Color.grass, positionY = 0, ratio = Field.ratio): THREE.Group {
+    public renderLine(indexY: number, colors: Array<number> = Color.grass, positionY = 0, ratio = Field.ratio, grid = Field.grid): THREE.Group {
 
         const grass: THREE.Group = new THREE.Group()
 
 
         let color: number
 
-        Tile.positions.forEach((index) => {
+        this.positions.forEach((index) => {
 
             color = this.getRandomColor(colors)
             const section: THREE.Mesh = this.tile.createSection(color, ratio)
 
-            const positionX: number = index * (Tile.positionWidth * this.zoom + Tile.space * this.zoom)
+            const positionX: number = index * (this.positionWidth * this.zoom + this.space * this.zoom)
 
             section.position.x = positionX
             section.receiveShadow = true
 
 
-            Field.grid.push({
+            grid.push({
                 centreX:  positionX,
                 centreY:  positionY,
                 id: section.uuid,
@@ -109,11 +114,11 @@ class Field extends Item {
         field.add( ground )
 
 
-        Tile.positions.forEach((index) => {
+        this.positions.forEach((index) => {
 
             const sign: number = this.getRandomSign()
 
-            const isLastLine: boolean = (Math.abs(index) == Tile.lastIndex)
+            const isLastLine: boolean = (Math.abs(index) == Field.lastIndex)
 
             const isGrass: boolean = (sign > 0)
 
@@ -121,7 +126,7 @@ class Field extends Item {
             const colors: Array<number> | undefined = isGrass ? grassColor : Color.tiles
 
 
-            const positionY: number = index * (Tile.positionWidth * this.zoom + Tile.space * this.zoom)
+            const positionY: number = index * (this.positionWidth * this.zoom + this.space * this.zoom)
 
             const tile: THREE.Group = this.renderLine(index, colors, positionY)
 
@@ -139,7 +144,7 @@ class Field extends Item {
     public renderGroundLayer(): THREE.Mesh {
 
         const color: number = Color.ground
-        const side: number = (Tile.positionWidth * this.zoom * Tile.positions.length + Tile.space * this.zoom * Tile.positions.length) * 2
+        const side: number = (this.positionWidth * this.zoom * this.positions.length + this.space * this.zoom * this.positions.length) * 2
 
         const ground: THREE.Mesh = new THREE.Mesh(
             new THREE.BoxGeometry( side, side, 3 * this.zoom ),
