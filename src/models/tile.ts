@@ -27,7 +27,7 @@ class Tile extends Item {
 
 
 
-    public createSection(color: number, ratio: number): THREE.Mesh {
+    public createSection(color: number, ratio: number, side: number = Tile.positionWidth): THREE.Mesh {
 
         return new THREE.Mesh(
             new THREE.BoxGeometry( Tile.positionWidth * this.zoom, Tile.positionWidth * this.zoom, ratio * this.zoom ),

@@ -14,6 +14,9 @@ import Boulder from './boulder'
 import Color from './color'
 import Unit from './unit'
 
+import MiniGame from './minigame'
+import GameBase from './game_base'
+
 
 import Connector from './connector'
 
@@ -33,16 +36,11 @@ type RenderItemsParameters<Type> = {
 
 
 
-class Game {
+class Game extends GameBase {
 
-    private scene: THREE.Scene
     private camera: THREE.PerspectiveCamera
 
     private renderer: THREE.WebGLRenderer
-
-
-    private rayCaster!: THREE.Raycaster
-    private pointer!: THREE.Vector2
 
 
     private controls: OrbitControls
@@ -61,10 +59,14 @@ class Game {
 
     constructor(private connector: Connector) {
 
-        this.scene = new THREE.Scene()
+        super()
+
 
         this.renderer = this.initRenderer()
         this.camera = this.initCamera()
+
+
+        document.body.appendChild(this.renderer.domElement)
 
 
         this.initLight()
@@ -75,16 +77,21 @@ class Game {
         this.initMap()
 
 
-        this.initRayCaster()
+
+        this.initRayCaster(this.onPointerMove.bind(this))
 
         this.initResizeListener()
 
 
         this.controls = new OrbitControls(this.camera, this.renderer.domElement)
-        this.renderer.setAnimationLoop(this.render.bind(this))
+        this.renderer.setAnimationLoop(this.animation.bind(this))
 
         this.renderer.render(this.scene, this.camera)
+
+
+        new MiniGame()
     }
+
 
 
     private initMap() {
@@ -93,7 +100,7 @@ class Game {
 
             if (!this.mapInitialized) {
 
-                this.unit = this.renderUnits()
+                this.unit = this.renderUnit(Field.getStartTile(-1), Color.units[1])
             }
 
             this.connector.initMap({ grid: Field.grid })
@@ -134,28 +141,21 @@ class Game {
     }
 
 
-    public onPointerMove( event: MouseEvent ) {
+    public animation() {
 
-        this.pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1
-        this.pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1
-    }
+        this.rayCaster.setFromCamera(this.pointer, this.camera)
 
-
-    public render() {
-
-        this.rayCaster.setFromCamera( this.pointer, this.camera )
-
-        const intersects = this.rayCaster.intersectObjects( this.scene.children )
+        const intersects = this.rayCaster.intersectObjects(this.scene.children)
 
 
-        if ( intersects.length > 0 ) {
+        if (intersects.length > 0) {
 
-            if (( this.previous != intersects[0].object ) && ( Field.groundUuid != intersects[0].object.uuid )) {
+            if ((this.previous != intersects[0].object) && (Field.groundUuid != intersects[0].object.uuid)) {
 
 
-                if ( this.previous ) {
+                if (this.previous) {
 
-                    this.previous.material.emissive.setHex( this.previous.currentHex )
+                    this.previous.material.emissive.setHex(this.previous.currentHex)
                 }
 
                 this.previous = intersects[0].object
@@ -164,14 +164,14 @@ class Game {
 
 
                 this.previous.currentHex = this.previous.material.emissive.getHex()
-                this.previous.material.emissive.setHex( Color.selection )
+                this.previous.material.emissive.setHex(Color.selection)
             }
 
         } else {
 
-            if ( this.previous ) {
+            if (this.previous) {
 
-                this.previous.material.emissive.setHex( this.previous.currentHex )
+                this.previous.material.emissive.setHex(this.previous.currentHex)
             }
 
             this.previous = null
@@ -179,38 +179,24 @@ class Game {
         }
 
 
-        console.debug('🚀 ~ file: game.ts:182 ~ Game ~ render ~ this.camera:', this.camera)
-
-
-        this.renderer.render( this.scene, this.camera )
+        this.renderer.render(this.scene, this.camera)
     }
 
-
-    private initRayCaster() {
-
-        this.rayCaster = new THREE.Raycaster()
-        this.pointer = new THREE.Vector2()
-
-        const onPointerMove = (event: MouseEvent) => this.onPointerMove(event)
-
-        addEventListener( 'mousemove', onPointerMove )
-    }
 
 
     private initRenderer(): THREE.WebGLRenderer {
 
-        const renderer = new THREE.WebGLRenderer({
-            alpha: true,
-            antialias: true
-        })
+        const renderer: THREE.WebGLRenderer = this.createRenderer(
+            {
+                alpha: true,
+                antialias: true
+            },
+            (renderer: THREE.WebGLRenderer) => {
 
-
-        renderer.shadowMap.enabled = true
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap
-
-        renderer.setSize( window.innerWidth, window.innerHeight )
-
-        document.body.appendChild( renderer.domElement )
+                renderer.shadowMap.enabled = true
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap
+            }
+        )
 
 
         return renderer
@@ -219,66 +205,12 @@ class Game {
 
     private initCamera(): THREE.PerspectiveCamera {
 
-        const aspectRatio = window.innerWidth / window.innerHeight
-        const camera = new THREE.PerspectiveCamera(35, aspectRatio, 1, 10000 )
+        const camera: THREE.PerspectiveCamera = this.createCamera(35, 1, 10000, { x: 22, y: -2950, z: 1600 })
 
-
-        camera.rotation.x = 50 * Math.PI / 180
-        camera.rotation.y = 20 * Math.PI / 180
-        camera.rotation.z = 10 * Math.PI / 180
-
-
-        camera.position.x = 22
-        camera.position.y = -2950
-        camera.position.z = 1600
 
         return camera
     }
 
-
-    private addDirectionalLight(target: THREE.Object3D): void {
-
-        const initialDirLightPositionX = -100
-        const initialDirLightPositionY = -100
-
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.6)
-
-        dirLight.position.set(initialDirLightPositionX, initialDirLightPositionY, 200)
-        dirLight.castShadow = true
-        dirLight.target = target
-
-        this.scene.add(dirLight)
-
-
-        dirLight.shadow.mapSize.width = 2048
-        dirLight.shadow.mapSize.height = 2048
-        const d = 500
-
-        dirLight.shadow.camera.left = - d
-        dirLight.shadow.camera.right = d
-        dirLight.shadow.camera.top = d
-        dirLight.shadow.camera.bottom = - d
-
-
-        dirLight.position.x = initialDirLightPositionX
-        dirLight.position.y = initialDirLightPositionY
-    }
-
-
-    private initLight(): void {
-
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6)
-
-        this.scene.add(hemiLight)
-
-
-        const backLight = new THREE.DirectionalLight(0x000000, .4)
-
-        backLight.position.set(200, 200, 50)
-        backLight.castShadow = true
-
-        this.scene.add(backLight)
-    }
 
 
     private getRandomSign(): number {
@@ -401,19 +333,11 @@ class Game {
     }
 
 
-    public renderUnits(): THREE.Group {
+    public renderUnit(cell: GridCell, color: number): THREE.Group {
 
-        const unitN1: THREE.Group = this.addUnit(Field.getStartTile(), Color.units[0])
+        const unit: THREE.Group = this.addUnit(cell, color)
 
-        this.addDirectionalLight(unitN1)
-
-
-
-        const unitN2: THREE.Group = this.addUnit(Field.getStartTile(-1), Color.units[1])
-
-        this.addDirectionalLight(unitN2)
-
-        return unitN2
+        return unit
     }
 
 

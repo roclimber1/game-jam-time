@@ -48,7 +48,10 @@
 
 
     <div id="control-panel">
-        <input type="text" id="chat-input" />
+        <input
+            type="text"
+            id="chat-input"
+        />
 
         <button id="chat-button">
             Send message
@@ -58,21 +61,148 @@
 
     <div class="w-full h-full absolute top-0 flex">
 
-        <div id="left-panel" class="max-h-fit w-20 rounded-lg bg-slate-800 opacity-80 m-2"></div>
+        <div
+            id="left-panel"
+            class="max-h-fit w-20 rounded-lg bg-slate-800 opacity-80 m-2"
+        ></div>
 
         <div class="w-11/12 max-h-fit flex flex-col justify-center">
 
-            <div id="top-panel" class="h-20 w-full rounded-lg bg-slate-800 opacity-80 mt-2 text-lg text-white flex justify-center items-center">
+            <div
+                id="top-panel"
+                class="h-20 w-full rounded-lg bg-slate-800 opacity-80 mt-2 text-lg text-white flex justify-center items-center"
+            >
                 Your goal is to reach the opposite side of the board! 🪅✨
             </div>
 
-            <div class="h-5/6 w-full"></div>
+            <div class="h-5/6 w-full mt-2 mb-2">
 
-            <div id="bottom-panel" class="h-20 w-full rounded-lg bg-slate-800 opacity-80 mb-2"></div>
+                <div
+                    id="waiting-room"
+                    class="h-full w-full rounded-lg bg-slate-900 text-5xl text-white opacity-95 flex flex-col justify-center items-center"
+                >
+
+                    <div>We are waiting for your opponent ⚔️</div>
+
+
+                    <div class="h-36 w-full mt-10 flex justify-center">
+                        <svg
+                            version="1.1"
+                            id="L4"
+                            xmlns="http://www.w3.org/2000/svg"
+                            xmlns:xlink="http://www.w3.org/1999/xlink"
+                            x="0px"
+                            y="0px"
+                            viewBox="0 0 100 100"
+                            enable-background="new 0 0 0 0"
+                            xml:space="preserve"
+                        >
+                            <circle
+                                fill="#C2410C"
+                                stroke="none"
+                                cx="16"
+                                cy="50"
+                                r="6"
+                            >
+                                <animate
+                                    attributeName="r"
+                                    attributeType="XML"
+                                    dur="1s"
+                                    values="1; 15; 1"
+                                    repeatCount="indefinite"
+                                    begin="0.1s"
+                                />
+                            </circle>
+
+                            <circle
+                                fill="#C2410C"
+                                stroke="none"
+                                cx="32"
+                                cy="50"
+                                r="6"
+                            >
+                                <animate
+                                    attributeName="r"
+                                    attributeType="XML"
+                                    dur="1s"
+                                    values="1; 15; 1"
+                                    repeatCount="indefinite"
+                                    begin="0.2s"
+                                />
+                            </circle>
+
+                            <circle
+                                fill="#C2410C"
+                                stroke="none"
+                                cx="48"
+                                cy="50"
+                                r="6"
+                            >
+                                <animate
+                                    attributeName="r"
+                                    attributeType="XML"
+                                    dur="1s"
+                                    values="1; 15; 1"
+                                    repeatCount="indefinite"
+                                    begin="0.3s"
+                                />
+                            </circle>
+
+                            <circle
+                                fill="#C2410C"
+                                stroke="none"
+                                cx="64"
+                                cy="50"
+                                r="6"
+                            >
+                                <animate
+                                    attributeName="r"
+                                    attributeType="XML"
+                                    dur="1s"
+                                    values="1; 15; 1"
+                                    repeatCount="indefinite"
+                                    begin="0.4s"
+                                />
+                            </circle>
+
+                            <circle
+                                fill="#C2410C"
+                                stroke="none"
+                                cx="80"
+                                cy="50"
+                                r="6"
+                            >
+                                <animate
+                                    attributeName="r"
+                                    attributeType="XML"
+                                    dur="1s"
+                                    values="1; 15; 1"
+                                    repeatCount="indefinite"
+                                    begin="0.5s"
+                                />
+                            </circle>
+
+                        </svg>
+                    </div>
+
+
+                </div>
+            </div>
+
+
+            <div
+                id="bottom-panel"
+                class="h-20 w-full rounded-lg bg-slate-800 opacity-80 mb-2"
+            ></div>
         </div>
 
-        <div id="right-panel" class="max-h-fit w-20 rounded-lg bg-slate-800 opacity-80 m-2"></div>
+
+        <div
+            id="right-panel"
+            class="max-h-fit w-20 rounded-lg bg-slate-800 opacity-80 m-2"
+        ></div>
     </div>
+
 
 
 </body>
