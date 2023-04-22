@@ -1,9 +1,15 @@
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
 body {
   margin: 0;
   font-size: 2em;
   color: white;
 }
+
 
 #score, #control-panel {
   position: absolute;
