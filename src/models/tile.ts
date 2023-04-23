@@ -2,7 +2,7 @@
 import * as THREE from 'three'
 
 
-import Color from './color'
+import Color from '../../common/models/color'
 import Item from './item'
 
 

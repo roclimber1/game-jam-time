@@ -2,25 +2,24 @@
 import * as THREE from 'three'
 
 
-import Color from './color'
+import Color from '../../common/models/color'
 import Item from './item'
+
+
+import { BOULDER_SEGMENTS, BOULDER_WIDTHS } from '../../common/constants'
+
 
 
 
 class Boulder extends Item {
 
-    private widths: Array<number> = [5, 7, 10, 13, 15, 17, 19]
-    private segments: Array<number> = [4, 6, 8]
+    private widths: Array<number> = BOULDER_WIDTHS
+    private segments: Array<number> = BOULDER_SEGMENTS
 
     private angles: Array<number> = [2, 3, 4, 5, 6]
 
 
-    render(): THREE.Mesh {
-
-        const width: number = this.getRandomWidth(this.widths)
-        const segments: number = this.getRandom(this.segments)
-
-        const color: number = this.getRandomColor(Color.boulders)
+    render(width: number = this.getRandomWidth(this.widths), segments: number = this.getRandom(this.segments), color: number = this.getRandomColor(Color.boulders)): THREE.Mesh {
 
         const boulder: THREE.Mesh = new THREE.Mesh(
             new THREE.SphereGeometry( width * this.zoom, segments, segments ),

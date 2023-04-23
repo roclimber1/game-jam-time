@@ -1,11 +1,16 @@
 
-import type { GameEngineBase } from '../interfaces'
+import { INIT_RESOURCES } from '../../common/constants'
+
+
+
+import type { GameEngineBase, Resources } from '../../common/interfaces'
 
 
 
 class GameEngine implements GameEngineBase {
 
     public score!: Array<number>
+    public resources!: Array<Resources>
 
     public static yourIndex = 0
     public static opponentIndex = 1
@@ -22,6 +27,8 @@ class GameEngine implements GameEngineBase {
     private init() {
 
         this.score = [0,0]
+        this.resources = [INIT_RESOURCES, INIT_RESOURCES]
+
         this.firstPlayer = false
     }
 
@@ -38,8 +45,18 @@ class GameEngine implements GameEngineBase {
 
         return {
             firstPlayer: this.firstPlayer,
+            resources: this.resources,
             score: this.score
         }
+    }
+
+
+    public updateGameData(data: GameEngineBase) {
+
+        const { score, resources } = data
+
+        this.score = score
+        this.resources = resources
     }
 }
 

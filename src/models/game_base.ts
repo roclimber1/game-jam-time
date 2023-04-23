@@ -81,8 +81,8 @@ class GameBase {
         fov = 45,
         near = 0.1,
         far = 100,
-        camPos = { x: 0, y: 0, z: 5 },
-        camLookAt = { x: 0, y: 0, z: 0 },
+        camPos = new THREE.Vector3(0, 0, 5),
+        camLookAt = new THREE.Vector3(0, 0, 0),
         aspect = window.innerWidth / window.innerHeight
     ) => {
         const camera = new THREE.PerspectiveCamera(fov, aspect, near, far)
@@ -101,7 +101,7 @@ class GameBase {
         const initialDirLightPositionX = -100
         const initialDirLightPositionY = -100
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.6)
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.5)
 
         dirLight.position.set(initialDirLightPositionX, initialDirLightPositionY, 200)
         dirLight.castShadow = true

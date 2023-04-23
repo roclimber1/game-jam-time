@@ -1,7 +1,9 @@
 
-import { ITEM } from '../../common/constants'
-import { GameRoomBase, GridCell, PlayerBase } from '../../common/interfaces'
+import { BOULDER_SEGMENTS, BOULDER_WIDTHS, INIT_RESOURCES, ITEM } from '../../common/constants'
+import { GameEngineBase, GameRoomBase, GridCell, PlayerBase } from '../../common/interfaces'
 
+import ItemBase from '../../common/models/item_base'
+import Color from '../../common/models/color'
 
 
 export class Player implements PlayerBase {
@@ -38,6 +40,8 @@ class GameRoom implements GameRoomBase {
     public currentTurnId = ''
 
 
+    public gameData: GameEngineBase
+
 
     public static getRoomId(roomNumber: number): string {
 
@@ -51,6 +55,12 @@ class GameRoom implements GameRoomBase {
     ) {
 
         this.updatePlayers(rooms)
+
+
+        this.gameData = {
+            score: [0,0],
+            resources: [INIT_RESOURCES, INIT_RESOURCES]
+        }
     }
 
 
@@ -101,18 +111,14 @@ class GameRoom implements GameRoomBase {
 
 
 
-    private getRandomSign(): number {
-
-        return Math.round(Math.random()) ? 1 : -1
-    }
-
-
     private generateMap(grid: Array<GridCell>) {
 
         if (!this.map.length) {
 
             const itemsArray: Array<ITEM> = [ITEM.TREE, ITEM.BOULDER]
             const newGrid: Array<GridCell> = [...grid]
+
+            const baseItem: ItemBase = new ItemBase(2)
 
 
             itemsArray.forEach((item: ITEM) => {
@@ -121,13 +127,37 @@ class GameRoom implements GameRoomBase {
 
                     const gridCell: GridCell = newGrid[i]
 
-                    const odds: boolean = (this.getRandomSign() + this.getRandomSign() + this.getRandomSign()) > 1.5
+                    const odds: boolean = (baseItem.getRandomSign() + baseItem.getRandomSign() + baseItem.getRandomSign()) > 1.5
 
 
                     if (odds && !gridCell.occupied) {
 
                         newGrid[i].occupied = true
                         newGrid[i].type = item
+
+
+                        switch (item) {
+
+                            case ITEM.BOULDER:
+
+                                newGrid[i].parameters = {
+                                    width: baseItem.getRandomWidth(BOULDER_WIDTHS),
+                                    segments: baseItem.getRandom(BOULDER_SEGMENTS),
+                                    color: baseItem.getRandomColor(Color.boulders)
+                                }
+
+                                break
+
+                            case ITEM.TREE:
+
+                                newGrid[i].parameters = {
+                                    width: baseItem.getRandomWidth(),
+                                    height: baseItem.getRandomHeight(),
+                                    color: baseItem.getRandomColor()
+                                }
+
+                                break
+                        }
                     }
                 }
             })
@@ -152,6 +182,7 @@ class GameRoom implements GameRoomBase {
         return {
             currentTurnId: this.currentTurnId,
             firstPlayerIndex: this.firstPlayerIndex,
+            gameData: this.gameData,
             id: this.id,
             map: this.map,
             players: this.players.map((item) => ({
