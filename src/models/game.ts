@@ -7,12 +7,14 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 import Tree from './tree'
 import Mushroom from './mushroom'
-
-import Item from './item'
-import Field from './field'
 import Boulder from './boulder'
 
-import Color from './color'
+import Item from './item'
+import Tile from './tile'
+import Field from './field'
+
+
+import Color from '../../common/models/color'
 import Unit from './unit'
 
 import MiniGame from './minigame'
@@ -28,8 +30,7 @@ import { ITEM } from '../../common/constants'
 
 
 
-import type { GridCell } from '@/common/interfaces'
-import type { GameEngineBase } from '../interfaces'
+import type { GridCell, GameEngineBase, TreeParameters, BoulderParameters } from '@/common/interfaces'
 
 
 
@@ -47,7 +48,7 @@ class Game extends GameBase {
     private renderer: THREE.WebGLRenderer
 
 
-    private controls: OrbitControls
+    private controls!: OrbitControls
 
     private unit!: THREE.Group
     private opponent!: THREE.Group
@@ -56,6 +57,9 @@ class Game extends GameBase {
     private gameEngine: GameEngine
 
     private gameData: GameEngineBase
+
+
+    private selectedTile: GridCell | null = null
 
 
     private mapInitialized = false
@@ -87,11 +91,6 @@ class Game extends GameBase {
 
         this.initEventListeners()
 
-
-        this.initResizeListener()
-
-
-        this.controls = new OrbitControls(this.camera, this.renderer.domElement)
 
         this.renderer.render(this.scene, this.camera)
 
@@ -125,6 +124,7 @@ class Game extends GameBase {
         this.changeWaitingRoom(false)
 
 
+        this.miniGame?.destroy()
         this.miniGame = null
 
 
@@ -136,15 +136,61 @@ class Game extends GameBase {
     }
 
 
-    // const unitN1: THREE.Group = this.addUnit(Field.getStartTile(), Color.units[0])
+    private removeItem(cell: GridCell) {
 
-    // this.addDirectionalLight(unitN1)
+        this.scene.remove(cell.item as THREE.Object3D)
 
+        Field.removeItemFromTile(cell)
+    }
 
-    // const unit: THREE.Group = this.addUnit(Field.getStartTile(-1), Color.units[1])
 
 
     private initEventListeners() {
+
+
+        document.addEventListener('click', () => {
+
+            if (this.selectedTile) {
+
+                console.debug('🚀 ~ file: game.ts:146 ~ Game ~ document.addEventListener ~ this.selectedTile:', this.selectedTile)
+
+
+                // '🪨🪵🪓⛏️⚒️🔨🛠️🔧🪜🛡️🪚🏹🗡️⚔️💣🪙⏳👣'
+
+
+                if (!this.selectedTile.occupied) {
+
+                    const nearestTile: boolean = Field.checkNearestTile(this.selectedTile, this.unit)
+
+
+                    if (nearestTile) {
+
+                        this.unit.position.set(this.selectedTile.centreX, this.selectedTile.centreY, this.unit.position.z)
+                    }
+                } else {
+
+                    switch (this.selectedTile.type) {
+
+                        case ITEM.BOULDER:
+
+                            this.removeItem(this.selectedTile)
+
+                            console.count('🚀 ~ file: game.ts:177 ~ Game ~ document.addEventListener ~ ITEM.BOULDER:')
+
+                            break
+
+                        case ITEM.TREE:
+
+                            this.removeItem(this.selectedTile)
+
+                            console.count('🚀 ~ file: game.ts:178 ~ Game ~ document.addEventListener ~ ITEM.TREE:')
+
+                            break
+                    }
+                }
+            }
+        })
+
 
         document.addEventListener(CUSTOM_EVENT.CONNECT, (event) => {
 
@@ -158,8 +204,19 @@ class Game extends GameBase {
 
             if (!this.mapInitialized) {
 
-                this.unit = this.renderUnit(Field.getStartTile(-1), Color.units[1])
-                this.opponent = this.renderUnit(Field.getStartTile(), Color.units[0])
+                if (this.gameData.firstPlayer) {
+
+                    this.unit = this.renderUnit(Field.getStartTile(-1), Color.units[1])
+                    this.opponent = this.renderUnit(Field.getStartTile(), Color.units[0])
+                } else {
+
+                    this.opponent = this.renderUnit(Field.getStartTile(-1), Color.units[1])
+                    this.unit = this.renderUnit(Field.getStartTile(), Color.units[0])
+                }
+
+
+                this.addDirectionalLight(this.unit)
+
 
                 this.scene.add(this.unit)
             }
@@ -188,7 +245,7 @@ class Game extends GameBase {
                 element: waitingRoomBlock,
                 icon: '🏆',
                 startNewGame: () => window.location.reload(),
-                text: 'Your opponent fled the battlefield 😶‍🌫️! Your tactic skills scared him away! You win!',
+                text: 'Your opponent fled the battlefield 😶‍🌫️! Your tactic skills scared him away!',
                 title: 'You win!'
             })
 
@@ -207,7 +264,20 @@ class Game extends GameBase {
             if (!this.mapInitialized) {
 
                 this.renderMap(data)
+
+
+                if (!this.gameData.firstPlayer) {
+
+                    this.camera.position.set(22, 2950, 1600)
+                    this.camera.up.set(0, -1, 0)
+
+
+                    this.resizeListener()
+                }
+
+
                 this.initOpponent()
+
 
                 this.mapInitialized = true
             }
@@ -216,21 +286,18 @@ class Game extends GameBase {
     }
 
 
-    private initResizeListener() {
+
+    private resizeListener() {
+
+        const { innerWidth, innerHeight } = window
+
+        this.camera.aspect = innerWidth / innerHeight
+        this.camera.updateProjectionMatrix()
+
+        this.controls.update()
 
 
-        window.addEventListener('resize', () => {
-
-            const { innerWidth, innerHeight } = window
-
-            this.camera.aspect = innerWidth / innerHeight
-            this.camera.updateProjectionMatrix()
-
-            this.controls.update()
-
-
-            this.renderer.setSize(innerWidth, innerHeight)
-        })
+        this.renderer.setSize(innerWidth, innerHeight)
     }
 
 
@@ -253,7 +320,7 @@ class Game extends GameBase {
 
                 this.previous = intersects[0].object
 
-                const tile: GridCell = Field.getTileByUuid(intersects[0].object.uuid)
+                this.selectedTile = Field.getTileByUuid(intersects[0].object.uuid)
 
 
                 this.previous.currentHex = this.previous.material.emissive.getHex()
@@ -268,6 +335,7 @@ class Game extends GameBase {
             }
 
             this.previous = null
+            this.selectedTile = null
 
         }
 
@@ -296,12 +364,26 @@ class Game extends GameBase {
     }
 
 
-    private initCamera(): THREE.PerspectiveCamera {
+    private initCamera(position: THREE.Vector3 = new THREE.Vector3(22, -2950, 1600)): THREE.PerspectiveCamera {
 
-        const camera: THREE.PerspectiveCamera = this.createCamera(35, 1, 10000, { x: 22, y: -2950, z: 1600 })
+        const camera: THREE.PerspectiveCamera = this.createCamera(35, 1, 10000, position)
 
+
+        this.controls = new OrbitControls(camera, this.renderer.domElement)
+
+        document.addEventListener('resize', this.resizeListener.bind(this))
 
         return camera
+    }
+
+
+    private reInitCamera(position: THREE.Vector3) {
+
+        this.scene.remove(this.camera)
+
+        document.removeEventListener('resize', this.resizeListener.bind(this))
+
+        return this.initCamera(position)
     }
 
 
@@ -368,21 +450,33 @@ class Game extends GameBase {
 
     private renderMap(grid: Array<GridCell>) {
 
-        grid.forEach((cell: GridCell) => {
+
+        grid.forEach((cell: GridCell, index: number) => {
 
             if (cell.occupied) {
 
                 let item
+                let parameters
+                let itemArguments: Array<number> = []
+
 
                 switch (cell.type) {
 
                     case ITEM.TREE:
+
                         item = new Tree(Game.zoom)
+                        parameters = cell.parameters as TreeParameters
+
+                        itemArguments = [parameters.width, parameters.height, parameters.color]
 
                         break
 
                     case ITEM.BOULDER:
+
                         item = new Boulder(Game.zoom)
+                        parameters = cell.parameters as BoulderParameters
+
+                        itemArguments = [parameters.width, parameters.segments, parameters.color]
 
                         break
 
@@ -398,15 +492,21 @@ class Game extends GameBase {
 
                 if (item) {
 
-                    const objectItem = item.render()
+                    const objectItem = item.render(...itemArguments)
 
                     objectItem.position.x = cell.centreX
                     objectItem.position.y = cell.centreY
+
+
+                    grid[index].item = objectItem
 
                     this.scene.add(objectItem)
                 }
             }
         })
+
+
+        Field.updateGrid(grid)
     }
 
 
@@ -427,8 +527,6 @@ class Game extends GameBase {
     public renderUnit(cell: GridCell, color: number): THREE.Group {
 
         const unit: THREE.Group = this.addUnit(cell, color)
-
-        // this.addDirectionalLight(unit)
 
         return unit
     }

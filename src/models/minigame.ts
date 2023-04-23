@@ -89,46 +89,61 @@ class SimpleMiniGame {
     private interval: NodeJS.Timer | null = null
 
 
+
+    private mouseMoveListener(event: MouseEvent) {
+
+        const { clientX, clientY } = event
+
+        this.point = {
+            x: clientX,
+            y: clientY
+        }
+    }
+
+    private mouseClickListener(event: MouseEvent) {
+
+        const { clientX, clientY } = event
+
+
+        this.point = {
+            x: clientX,
+            y: clientY
+        }
+
+
+        if (this.interval) {
+
+            clearInterval(this.interval)
+
+            this.interval = null
+
+        } else {
+
+            this.interval = setInterval(() => this.addItem(this.point), 50)
+        }
+    }
+
+
     public init() {
 
-        document.addEventListener('click', (event: MouseEvent) => {
+        document.addEventListener('click', this.mouseClickListener.bind(this))
 
-            const { clientX, clientY } = event
-
-
-            this.point = {
-                x: clientX,
-                y: clientY
-            }
+        document.addEventListener('mousemove', this.mouseMoveListener.bind(this))
+    }
 
 
-            if (this.interval) {
+    public destroy() {
 
-                clearInterval(this.interval)
+        if (this.interval) {
 
-                this.interval = null
+            clearInterval(this.interval)
 
-            } else {
+            this.interval = null
+        }
 
-                this.interval = setInterval(() => this.addItem(this.point), 50)
-            }
-        })
+        document.removeEventListener('click', this.mouseClickListener.bind(this))
 
-
-
-        document.addEventListener('mousemove', (event: MouseEvent) => {
-
-            const { clientX, clientY } = event
-
-            this.point = {
-                x: clientX,
-                y: clientY
-            }
-        })
-
-
-
-
+        document.removeEventListener('mousemove', this.mouseMoveListener.bind(this))
     }
 }
 

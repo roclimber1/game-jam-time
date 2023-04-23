@@ -2,7 +2,7 @@
 import * as THREE from 'three'
 
 
-import Color from './color'
+import Color from '../../common/models/color'
 import Item from './item'
 import Tile from './tile'
 
@@ -32,9 +32,61 @@ class Field extends Item {
     static ratio = 5
 
 
+    static zoom: number
+
+
+    constructor(public zoom: number) {
+
+        super(zoom)
+
+        Field.zoom = zoom
+    }
+
+
     public findClosestTile() {
 
         //
+    }
+
+
+    static checkNearestTile(selectedCell: GridCell, unit: THREE.Group): boolean {
+
+        const xDiff: number = Math.abs(selectedCell.centreX) - Math.abs(unit.position.x)
+        const yDiff: number = Math.abs(selectedCell.centreY) - Math.abs(unit.position.y)
+
+        const distance: number = Math.sqrt(Math.pow(xDiff, 2) + Math.pow(yDiff, 2))
+
+        const maxDistance: number = Math.sqrt(2 * Math.pow(Tile.positionWidth * Field.zoom, 2)) + 3
+
+        const nearestTile: boolean = (distance <= maxDistance)
+
+
+        return nearestTile
+    }
+
+
+    static updateGrid(grid: Array<GridCell>) {
+
+        Field.grid = grid.map((cell, index) => {
+
+            return {
+                ...Field.grid[index],
+                item: cell.item,
+                occupied: cell.occupied,
+                type: cell.type
+            }
+        })
+    }
+
+
+    static removeItemFromTile(cell: GridCell) {
+
+        const tile: GridCell = Field.getTileByUuid(cell.id)
+
+        tile.occupied = false
+        tile.item = undefined
+        tile.type = ITEM.EMPTY
+        tile.parameters = {}
     }
 
 
@@ -89,6 +141,7 @@ class Field extends Item {
                 indexY,
                 object: section,
                 occupied: false,
+                parameters: {},
                 position: new THREE.Vector3(positionX, positionY, 0),
                 type: ITEM.EMPTY
             })

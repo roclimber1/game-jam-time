@@ -7,16 +7,14 @@ import Item from './item'
 
 
 
-class Tree extends Item {
 
-    static threeHeights: Array<number> = [20, 30, 35, 40, 45, 55, 60, 70]
-    static threeWidths: Array<number> = [25, 30, 35, 40, 45, 50]
+class Tree extends Item {
 
     static trunkWidth = 10
 
 
 
-    public render(): THREE.Group {
+    public render(width: number = this.getRandomWidth(), height: number = this.getRandomHeight(), color: number = this.getRandomColor()): THREE.Group {
 
         const tree: THREE.Group = new THREE.Group()
 
@@ -31,11 +29,6 @@ class Tree extends Item {
         trunk.receiveShadow = true
 
         tree.add(trunk)
-
-        const height: number = this.getRandomHeight()
-        const width: number = this.getRandomWidth()
-
-        const color: number = this.getRandomColor()
 
 
         const crown: THREE.Mesh = new THREE.Mesh(
