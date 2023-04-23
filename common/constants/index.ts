@@ -5,7 +5,8 @@ export enum MESSAGE {
     CONNECT = 'connect',
     INIT_MAP = 'INIT_MAP',
     MAP = 'MAP',
-    SET_ROOMS_DATA = 'SET_ROOMS_DATA'
+    SET_ROOMS_DATA = 'SET_ROOMS_DATA',
+    LEFT_ROOM = 'LEFT_ROOM'
 }
 
 

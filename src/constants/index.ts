@@ -2,5 +2,7 @@
 
 export enum CUSTOM_EVENT {
     CONNECT = 'CONNECT',
-    SET_MAP = 'SET_MAP'
+    OPPONENT = 'OPPONENT',
+    SET_MAP = 'SET_MAP',
+    WAITING = 'WAITING'
 }

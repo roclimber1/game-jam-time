@@ -29,6 +29,9 @@ class Connector implements AbstractConnector {
     private roomNumber!: number
 
 
+    public userId!: string
+
+
 
     private dispatchCustomEvent<Data = any>(type: CUSTOM_EVENT, data: Data) {
 
@@ -41,14 +44,22 @@ class Connector implements AbstractConnector {
     private listeners: Array<Listener> = [
         {
             type: MESSAGE.SET_ROOMS_DATA,
-            callback: (data) => {
+            callback: (data: GameRoomBase) => {
 
-                const { roomNumber } = data
+                const { roomNumber, players } = data
 
                 this.roomNumber = roomNumber
 
 
-                this.dispatchCustomEvent(CUSTOM_EVENT.CONNECT, {})
+                if (players.length > 1) {
+
+                    this.userId = this.ws.getSocketId()
+
+                    this.dispatchCustomEvent(CUSTOM_EVENT.CONNECT, data)
+
+                    console.debug('🚀 ~ file: connector.ts:59 ~ Connector ~ CUSTOM_EVENT.CONNECT:', CUSTOM_EVENT.CONNECT)
+
+                }
             }
         },
         {
@@ -63,6 +74,17 @@ class Connector implements AbstractConnector {
             callback: (data: Array<GridCell>) => {
 
                 this.dispatchCustomEvent(CUSTOM_EVENT.SET_MAP, data)
+
+                console.debug('🚀 ~ file: connector.ts:75 ~ Connector ~ CUSTOM_EVENT.SET_MAP:', CUSTOM_EVENT.SET_MAP)
+            }
+        },
+        {
+            type: MESSAGE.LEFT_ROOM,
+            callback: (id: string) => {
+
+                this.dispatchCustomEvent(CUSTOM_EVENT.WAITING, {})
+
+                console.debug('🚀 ~ file: connector.ts:82 ~ Connector ~ CUSTOM_EVENT.WAITING:', CUSTOM_EVENT.WAITING)
             }
         }
     ]

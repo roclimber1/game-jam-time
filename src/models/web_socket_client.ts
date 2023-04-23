@@ -58,6 +58,12 @@ class WebSocketClient implements AbstractConnector {
     }
 
 
+    public getSocketId(): string {
+
+        return this.socket.id
+    }
+
+
     public checkConnection(): boolean {
 
         return this.socket.connected
