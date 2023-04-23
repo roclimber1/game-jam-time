@@ -72,9 +72,45 @@
 
             <div
                 id="top-panel"
-                class="h-20 w-full rounded-lg bg-slate-800 opacity-80 mt-2 text-lg text-white flex justify-center items-center"
+                class="h-20 w-full rounded-lg bg-slate-800 opacity-80 mt-2 text-lg text-white flex flex-col justify-center items-center"
             >
-                Your goal is to reach the opposite side of the board! 🪅✨
+                <div>Your goal is to reach the opposite side of the board! 🪅✨</div>
+
+                <div class="h-8 flex justify-center items-center mt-1">
+                    <svg
+                        version="1.1"
+                        id="progress-bar"
+                        xmlns="http://www.w3.org/2000/svg"
+                        xmlns:xlink="http://www.w3.org/1999/xlink"
+                        height="120"
+                        width="120"
+                        xml:space="preserve"
+                    >
+                        <g class="progress-container">
+                            <line
+                                x1="0%"
+                                y1="50%"
+                                x2="100%"
+                                y2="50%"
+                                stroke-width="30"
+                            />
+                        </g>
+
+                        <g class="progress-content">
+                            <line
+                                x1="0%"
+                                y1="50%"
+                                x2="100%"
+                                y2="50%"
+                                stroke="#C2410C"
+                                fill="transparent"
+                                stroke-dasharray="100%"
+                                stroke-dashoffset="50%"
+                                stroke-width="28"
+                            />
+                        </g>
+                    </svg>
+                </div>
             </div>
 
             <div class="h-5/6 w-full mt-2 mb-2">
@@ -90,7 +126,6 @@
                     <div class="h-36 w-full mt-10 flex justify-center">
                         <svg
                             version="1.1"
-                            id="L4"
                             xmlns="http://www.w3.org/2000/svg"
                             xmlns:xlink="http://www.w3.org/1999/xlink"
                             x="0px"

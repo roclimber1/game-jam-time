@@ -95,6 +95,9 @@ class ControlPanel {
         this.controls.leftPanel = document.getElementById(PANEL.LEFT)
         this.controls.rightPanel = document.getElementById(PANEL.RIGHT)
     }
+
+
+    // document.getElementById('progress-bar').querySelector('.progress-content > line').attributes['stroke-dashoffset'] = `${100 - Math.round((value / max) * 100)}%`
 }
 
 

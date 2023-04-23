@@ -32,6 +32,18 @@ export const BOULDER_SEGMENTS: Array<number> = [4, 6, 8]
 
 
 
+export enum RESOURCE {
+    STONE = 'stone',
+    WOOD = 'wood'
+}
+
+
+export enum POINTS {
+    MOVES = 2,
+    RESOURCES = 1,
+    TRAP = 5,
+}
+
 
 export const INIT_RESOURCES: Resources = {
     stone: 0,

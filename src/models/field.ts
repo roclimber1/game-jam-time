@@ -98,6 +98,31 @@ class Field extends Item {
     }
 
 
+    static getTileByItemUuid(uuid: number): GridCell {
+
+        const tile: GridCell = Field.grid.find((cell) => (cell?.item as THREE.Object3D)?.id === uuid) as GridCell
+
+        return tile
+    }
+
+
+    static getTileByCentrePosition(item: THREE.Object3D): GridCell {
+
+        const position: THREE.Vector2 = new THREE.Vector2(item.position.x, item.position.y)
+
+        const tile: GridCell = Field.grid.find((cell) => {
+
+            const cellCentrePosition = new THREE.Vector2(cell.centreX, cell.centreY)
+
+            return cellCentrePosition.equals(position)
+
+        }) as GridCell
+
+
+        return tile
+    }
+
+
     static getTileByPosition(position: THREE.Vector3): GridCell {
 
         const tile: GridCell = Field.grid.find((cell) => cell.position.equals(position)) as GridCell
