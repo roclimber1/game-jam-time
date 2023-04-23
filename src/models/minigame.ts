@@ -1,7 +1,20 @@
 
+
 type Point = {
     x: number,
     y: number
+}
+
+
+type Listeners = {
+    mouseClickListener: (event: MouseEvent) => void,
+    mouseMoveListener: (event: MouseEvent) => void
+}
+
+
+let listeners: Listeners = {
+    mouseClickListener: (event: MouseEvent) => null,
+    mouseMoveListener: (event: MouseEvent) => null
 }
 
 
@@ -126,9 +139,14 @@ class SimpleMiniGame {
 
     public init() {
 
-        document.addEventListener('click', this.mouseClickListener.bind(this))
+        listeners = {
+            mouseClickListener: this.mouseClickListener.bind(this),
+            mouseMoveListener: this.mouseMoveListener.bind(this)
+        }
 
-        document.addEventListener('mousemove', this.mouseMoveListener.bind(this))
+        document.addEventListener('click', listeners.mouseClickListener)
+
+        document.addEventListener('mousemove', listeners.mouseMoveListener)
     }
 
 
@@ -141,9 +159,9 @@ class SimpleMiniGame {
             this.interval = null
         }
 
-        document.removeEventListener('click', this.mouseClickListener.bind(this))
+        document.removeEventListener('click', listeners?.mouseClickListener)
 
-        document.removeEventListener('mousemove', this.mouseMoveListener.bind(this))
+        document.removeEventListener('mousemove', listeners?.mouseMoveListener)
     }
 }
 

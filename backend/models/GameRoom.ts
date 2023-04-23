@@ -1,5 +1,5 @@
 
-import { BOULDER_SEGMENTS, BOULDER_WIDTHS, INIT_RESOURCES, ITEM } from '../../common/constants'
+import { BOULDER_SEGMENTS, BOULDER_WIDTHS, INIT_RESOURCES, ITEM, POINTS, RESOURCE } from '../../common/constants'
 import { GameEngineBase, GameRoomBase, GridCell, PlayerBase } from '../../common/interfaces'
 
 import ItemBase from '../../common/models/item_base'
@@ -102,6 +102,22 @@ class GameRoom implements GameRoomBase {
     }
 
 
+    public getPlayerIndexById(id: string): number {
+
+        let playerIndex = 0
+
+        this.players.forEach((item, index) => {
+
+            if (item.id == id) {
+
+                playerIndex = index
+            }
+        })
+
+        return playerIndex
+    }
+
+
     public getCurrentTurnUser(id: string): void {
 
         const player = this.players.find(item => item.id != id)
@@ -165,6 +181,33 @@ class GameRoom implements GameRoomBase {
 
             this.map = newGrid
         }
+    }
+
+
+    public addResource(id: string, type: RESOURCE): GameRoomBase {
+
+        const index: number = this.getPlayerIndexById(id)
+
+        this.gameData.resources[index][type] += 1
+        this.gameData.score[index] += POINTS.RESOURCES
+
+        return this.getRoomData()
+    }
+
+
+    public addWood(id: string): GameRoomBase {
+
+        const newGameData: GameRoomBase = this.addResource(id, RESOURCE.WOOD)
+
+        return newGameData
+    }
+
+
+    public addStone(id: string): GameRoomBase {
+
+        const newGameData: GameRoomBase = this.addResource(id, RESOURCE.STONE)
+
+        return newGameData
     }
 
 

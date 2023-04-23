@@ -145,22 +145,60 @@ class Game extends GameBase {
 
 
 
+    private addBonusInfoBlock(event: MouseEvent) {
+
+        type AddBonusInfoBlockParameters = {
+            icon: string
+            text: string
+        }
+
+        return (parameters: AddBonusInfoBlockParameters) => {
+
+            const { clientX, clientY } = event
+            const { icon, text } = parameters
+
+
+            const item: HTMLDivElement = document.createElement('div')
+
+
+            item.className = 'h-fit w-fit p-2 absolute flex justify-center rounded-lg bg-slate-800 opacity-80 text-3xl bonus-animation'
+
+
+            const size = 120
+
+            item.style.left = Math.round(clientX - size / 2) + 'px'
+            item.style.top = Math.round(clientY - size / 2) + 'px'
+
+
+
+            item.innerHTML = `${icon} ${text}`
+
+
+            document.body.appendChild(item)
+
+
+            setTimeout(() => item.remove(), 2000)
+        }
+    }
+
+
     private initEventListeners() {
 
 
-        document.addEventListener('click', () => {
+        document.addEventListener('click', (event: MouseEvent) => {
+
 
             if (this.selectedTile) {
 
-                console.debug('🚀 ~ file: game.ts:146 ~ Game ~ document.addEventListener ~ this.selectedTile:', this.selectedTile)
+
+                // '🪓⛏️⚒️🔨🛠️🔧🪜🛡️🪚🏹🗡️⚔️💣🪙⏳👣'
 
 
-                // '🪨🪵🪓⛏️⚒️🔨🛠️🔧🪜🛡️🪚🏹🗡️⚔️💣🪙⏳👣'
+                const nearestTile: boolean = Field.checkNearestTile(this.selectedTile, this.unit)
+
 
 
                 if (!this.selectedTile.occupied) {
-
-                    const nearestTile: boolean = Field.checkNearestTile(this.selectedTile, this.unit)
 
 
                     if (nearestTile) {
@@ -175,7 +213,7 @@ class Game extends GameBase {
 
                             this.removeItem(this.selectedTile)
 
-                            console.count('🚀 ~ file: game.ts:177 ~ Game ~ document.addEventListener ~ ITEM.BOULDER:')
+                            this.addBonusInfoBlock(event)({ icon: '🪨', text: '+1' })
 
                             break
 
@@ -183,7 +221,7 @@ class Game extends GameBase {
 
                             this.removeItem(this.selectedTile)
 
-                            console.count('🚀 ~ file: game.ts:178 ~ Game ~ document.addEventListener ~ ITEM.TREE:')
+                            this.addBonusInfoBlock(event)({ icon: '🪵', text: '+1' })
 
                             break
                     }
@@ -320,7 +358,22 @@ class Game extends GameBase {
 
                 this.previous = intersects[0].object
 
-                this.selectedTile = Field.getTileByUuid(intersects[0].object.uuid)
+
+                this.selectedTile = Field.getTileByUuid(this.previous.uuid)
+
+
+                if (!this.selectedTile) {
+
+                    let item: THREE.Object3D = this.previous
+
+
+                    if (!item.position.x && !item.position.y) {
+
+                        item = this.previous.parent as THREE.Object3D
+                    }
+
+                    this.selectedTile = Field.getTileByCentrePosition(item)
+                }
 
 
                 this.previous.currentHex = this.previous.material.emissive.getHex()
