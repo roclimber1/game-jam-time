@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 
+
 import Tree from './tree'
 import Mushroom from './mushroom'
 
@@ -15,6 +16,8 @@ import Color from './color'
 import Unit from './unit'
 
 import MiniGame from './minigame'
+
+import GameEngine from './game_engine'
 import GameBase from './game_base'
 
 
@@ -26,6 +29,7 @@ import { ITEM } from '../../common/constants'
 
 
 import type { GridCell } from '@/common/interfaces'
+import type { GameEngineBase } from '../interfaces'
 
 
 
@@ -46,6 +50,13 @@ class Game extends GameBase {
     private controls: OrbitControls
 
     private unit!: THREE.Group
+    private opponent!: THREE.Group
+
+    private miniGame: MiniGame | null = null
+    private gameEngine: GameEngine
+
+    private gameData: GameEngineBase
+
 
     private mapInitialized = false
 
@@ -74,37 +85,118 @@ class Game extends GameBase {
 
         this.renderField()
 
-        this.initMap()
+        this.initEventListeners()
 
-
-
-        this.initRayCaster(this.onPointerMove.bind(this))
 
         this.initResizeListener()
 
 
         this.controls = new OrbitControls(this.camera, this.renderer.domElement)
-        this.renderer.setAnimationLoop(this.animation.bind(this))
 
         this.renderer.render(this.scene, this.camera)
 
 
-        new MiniGame()
+        this.miniGame = new MiniGame()
+        this.gameEngine = new GameEngine()
+
+        this.gameData = this.gameEngine.getGameData()
     }
 
 
+    private changeWaitingRoom(status: boolean): HTMLElement {
 
-    private initMap() {
+        const waitingRoomBlock: HTMLElement = document.getElementById('waiting-room') as HTMLElement
 
-        document.addEventListener(CUSTOM_EVENT.CONNECT, () => {
+        if (status) {
+
+            waitingRoomBlock?.classList.remove('invisible')
+        } else {
+
+            waitingRoomBlock?.classList.add('invisible')
+        }
+
+
+        return waitingRoomBlock
+    }
+
+
+    private initOpponent() {
+
+        this.changeWaitingRoom(false)
+
+
+        this.miniGame = null
+
+
+        this.scene.add(this.opponent)
+
+        this.initRayCaster(this.onPointerMove.bind(this))
+
+        this.renderer.setAnimationLoop(this.animation.bind(this))
+    }
+
+
+    // const unitN1: THREE.Group = this.addUnit(Field.getStartTile(), Color.units[0])
+
+    // this.addDirectionalLight(unitN1)
+
+
+    // const unit: THREE.Group = this.addUnit(Field.getStartTile(-1), Color.units[1])
+
+
+    private initEventListeners() {
+
+        document.addEventListener(CUSTOM_EVENT.CONNECT, (event) => {
+
+
+            const { data } = (event as CustomEvent)?.detail || {}
+            const { currentTurnId } = data
+
+
+            this.gameData.firstPlayer = this.gameEngine.updateFirstPlayer(this.connector.userId, currentTurnId)
+
 
             if (!this.mapInitialized) {
 
                 this.unit = this.renderUnit(Field.getStartTile(-1), Color.units[1])
+                this.opponent = this.renderUnit(Field.getStartTile(), Color.units[0])
+
+                this.scene.add(this.unit)
             }
 
             this.connector.initMap({ grid: Field.grid })
         })
+
+
+
+        document.addEventListener(CUSTOM_EVENT.WAITING, () => {
+
+            const waitingRoomBlock: HTMLElement = this.changeWaitingRoom(true)
+
+
+            waitingRoomBlock.innerHTML = ''
+
+
+            const showScore: boolean = (this.gameData.score[GameEngine.yourIndex] > 0)
+                || (this.gameData.score[GameEngine.opponentIndex] > 0)
+
+
+            this.renderGameOverScreen({
+                body: showScore ? `<div>Your score: ${this.gameData.score[GameEngine.yourIndex]}</div>
+                <div>Your opponent's score: ${this.gameData.score[GameEngine.opponentIndex]}</div>` : '',
+                buttonText: 'Start a new game 🕹️',
+                element: waitingRoomBlock,
+                icon: '🏆',
+                startNewGame: () => window.location.reload(),
+                text: 'Your opponent fled the battlefield 😶‍🌫️! Your tactic skills scared him away! You win!',
+                title: 'You win!'
+            })
+
+
+            this.congratulations()
+
+        })
+
 
 
         document.addEventListener(CUSTOM_EVENT.SET_MAP, (event) => {
@@ -115,6 +207,7 @@ class Game extends GameBase {
             if (!this.mapInitialized) {
 
                 this.renderMap(data)
+                this.initOpponent()
 
                 this.mapInitialized = true
             }
@@ -326,8 +419,6 @@ class Game extends GameBase {
 
         gridCell.occupied = true
 
-        this.scene.add(unit)
-
 
         return unit
     }
@@ -336,6 +427,8 @@ class Game extends GameBase {
     public renderUnit(cell: GridCell, color: number): THREE.Group {
 
         const unit: THREE.Group = this.addUnit(cell, color)
+
+        // this.addDirectionalLight(unit)
 
         return unit
     }

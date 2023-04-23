@@ -77,6 +77,12 @@ class WebSocketServer {
             const room = this.rooms.get(roomId)
 
             room?.removePlayer(id)
+
+
+            this.io.to(roomId).emit(MESSAGE.LEFT_ROOM, id)
+
+
+            rooms.delete(roomId)
         })
 
 

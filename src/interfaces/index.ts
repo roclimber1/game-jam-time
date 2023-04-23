@@ -13,3 +13,10 @@ export interface Listener<Data = any> {
     type: MESSAGE,
     callback: (data: Data) => void
 }
+
+
+
+export interface GameEngineBase {
+    firstPlayer: boolean,
+    score: Array<number>
+}

@@ -30,7 +30,7 @@ class SimpleMiniGame {
         item.className = 'absolute flex justify-center'
 
 
-        const size = 144
+        const size = 100
 
         item.style.width = size + 'px'
         item.style.height = size + 'px'
@@ -52,7 +52,7 @@ class SimpleMiniGame {
             xml:space="preserve"
         >
             <circle
-                fill="#C2410C"
+                fill="#475569"
                 stroke="none"
                 cx="16"
                 cy="50"
@@ -63,6 +63,14 @@ class SimpleMiniGame {
                     attributeType="XML"
                     dur="1s"
                     values="1; 15; 1"
+                    repeatCount="indefinite"
+                    begin="0.1s"
+                />
+
+                <animate
+                    attributeName="opacity"
+                    dur="1s"
+                    values="0; 1; 0"
                     repeatCount="indefinite"
                     begin="0.1s"
                 />
