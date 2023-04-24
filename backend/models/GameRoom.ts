@@ -1,5 +1,5 @@
 
-import { BOULDER_SEGMENTS, BOULDER_WIDTHS, INIT_RESOURCES, ITEM, POINTS, RESOURCE } from '../../common/constants'
+import { BOULDER_SEGMENTS, BOULDER_WIDTHS, INIT_RESOURCES, ITEM, POINTS, RESOURCE, SETTINGS } from '../../common/constants'
 import { GameEngineBase, GameRoomBase, GridCell, PlayerBase } from '../../common/interfaces'
 
 import ItemBase from '../../common/models/item_base'
@@ -38,6 +38,9 @@ class GameRoom implements GameRoomBase {
 
 
     public currentTurnId = ''
+
+    public movesCounter = 0
+    public isOver = false
 
 
     public gameData: GameEngineBase
@@ -219,6 +222,32 @@ class GameRoom implements GameRoomBase {
     }
 
 
+    private intervalHandler: NodeJS.Timer | null = null
+
+
+    public startTimer(callback: () => void) {
+
+        this.intervalHandler = setInterval(() => {
+
+            this.getCurrentTurnUser(this.currentTurnId)
+
+
+            this.movesCounter++
+
+
+            this.isOver = (this.movesCounter >= SETTINGS.TOTAL_MOVES)
+
+            if (this.isOver) {
+
+                this.intervalHandler && clearInterval(this.intervalHandler)
+            }
+
+            callback()
+
+        }, SETTINGS.TURN_TIME * 1000)
+    }
+
+
     public getRoomData(): GameRoomBase {
 
 
@@ -227,7 +256,9 @@ class GameRoom implements GameRoomBase {
             firstPlayerIndex: this.firstPlayerIndex,
             gameData: this.gameData,
             id: this.id,
+            isOver: this.isOver,
             map: this.map,
+            movesCounter: this.movesCounter,
             players: this.players.map((item) => ({
                 id: item.id,
                 name: item.name

@@ -17,7 +17,9 @@ export interface GameRoomBase {
     firstPlayerIndex: number,
     gameData: GameEngineBase,
     id: string,
+    isOver: boolean,
     map: Array<GridCell>,
+    movesCounter: number,
     players: Array<PlayerBase>,
     roomNumber: number
 }

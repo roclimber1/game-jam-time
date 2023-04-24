@@ -24,13 +24,16 @@ import GameBase from './game_base'
 
 
 import Connector from './connector'
+import ControlPanel from './control_panel'
+
 
 import { CUSTOM_EVENT } from '../constants'
 import { ITEM } from '../../common/constants'
 
 
 
-import type { GridCell, GameEngineBase, TreeParameters, BoulderParameters } from '@/common/interfaces'
+import type { GridCell, GameEngineBase, TreeParameters, BoulderParameters, GameRoomBase } from '@/common/interfaces'
+import type { RenderGameOverScreenParameters } from '../interfaces'
 
 
 
@@ -57,6 +60,7 @@ class Game extends GameBase {
     private gameEngine: GameEngine
 
     private gameData: GameEngineBase
+    private controlPanel: ControlPanel
 
 
     private selectedTile: GridCell | null = null
@@ -99,29 +103,17 @@ class Game extends GameBase {
         this.gameEngine = new GameEngine()
 
         this.gameData = this.gameEngine.getGameData()
-    }
 
 
-    private changeWaitingRoom(status: boolean): HTMLElement {
+        this.controlPanel = new ControlPanel(connector)
 
-        const waitingRoomBlock: HTMLElement = document.getElementById('waiting-room') as HTMLElement
-
-        if (status) {
-
-            waitingRoomBlock?.classList.remove('invisible')
-        } else {
-
-            waitingRoomBlock?.classList.add('invisible')
-        }
-
-
-        return waitingRoomBlock
+        this.controlPanel.hideProgressBarPanel()
     }
 
 
     private initOpponent() {
 
-        this.changeWaitingRoom(false)
+        this.controlPanel.changeWaitingRoom(false)
 
 
         this.miniGame?.destroy()
@@ -182,6 +174,43 @@ class Game extends GameBase {
     }
 
 
+
+    private showGameOverScreen(isWinner = false, data: GameRoomBase, event: CUSTOM_EVENT) {
+
+        const { gameData } = data
+
+        this.gameEngine.updateGameData(gameData)
+
+
+        const waitingRoomBlock: HTMLElement = this.controlPanel.changeWaitingRoom(true)
+
+
+        waitingRoomBlock.innerHTML = ''
+
+
+        const parameters: Partial<RenderGameOverScreenParameters> = this.gameEngine.getMessages(event)
+
+
+        this.renderGameOverScreen({
+            ...parameters,
+            element: waitingRoomBlock
+        } as RenderGameOverScreenParameters)
+
+
+        this.controlPanel.gameOver()
+
+
+        const youWinner: boolean = this.gameEngine.checkIfYouWinner()
+
+
+        if (youWinner || isWinner) {
+
+            this.congratulations()
+        }
+    }
+
+
+
     private initEventListeners() {
 
 
@@ -230,6 +259,19 @@ class Game extends GameBase {
         })
 
 
+        document.addEventListener(CUSTOM_EVENT.TURN, (event) => {
+
+            const { data } = (event as CustomEvent)?.detail || {}
+            const { currentTurnId, movesCounter } = data
+
+            const isOpponent: boolean = (currentTurnId != this.connector.userId)
+
+
+            this.controlPanel.startTimer(isOpponent)
+            this.controlPanel.updateMovesCounter(movesCounter)
+        })
+
+
         document.addEventListener(CUSTOM_EVENT.CONNECT, (event) => {
 
 
@@ -264,32 +306,20 @@ class Game extends GameBase {
 
 
 
-        document.addEventListener(CUSTOM_EVENT.WAITING, () => {
+        document.addEventListener(CUSTOM_EVENT.GAME_OVER_MOVES_LIMIT, (event) => {
 
-            const waitingRoomBlock: HTMLElement = this.changeWaitingRoom(true)
+            const { data } = (event as CustomEvent)?.detail || {}
 
-
-            waitingRoomBlock.innerHTML = ''
-
-
-            const showScore: boolean = (this.gameData.score[GameEngine.yourIndex] > 0)
-                || (this.gameData.score[GameEngine.opponentIndex] > 0)
+            this.showGameOverScreen(false, data as GameRoomBase, CUSTOM_EVENT.GAME_OVER_MOVES_LIMIT)
+        })
 
 
-            this.renderGameOverScreen({
-                body: showScore ? `<div>Your score: ${this.gameData.score[GameEngine.yourIndex]}</div>
-                <div>Your opponent's score: ${this.gameData.score[GameEngine.opponentIndex]}</div>` : '',
-                buttonText: 'Start a new game 🕹️',
-                element: waitingRoomBlock,
-                icon: '🏆',
-                startNewGame: () => window.location.reload(),
-                text: 'Your opponent fled the battlefield 😶‍🌫️! Your tactic skills scared him away!',
-                title: 'You win!'
-            })
 
+        document.addEventListener(CUSTOM_EVENT.OPPONENT_FLED, (event) => {
 
-            this.congratulations()
+            const { data } = (event as CustomEvent)?.detail || {}
 
+            this.showGameOverScreen(true, data as GameRoomBase, CUSTOM_EVENT.OPPONENT_FLED)
         })
 
 
@@ -316,8 +346,16 @@ class Game extends GameBase {
 
                 this.initOpponent()
 
+                this.controlPanel.showProgressBarPanel()
+
 
                 this.mapInitialized = true
+
+
+                if (this.gameData.firstPlayer) {
+
+                    this.connector.mapInitialized()
+                }
             }
         })
 

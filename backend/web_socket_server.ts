@@ -79,7 +79,10 @@ class WebSocketServer {
             room?.removePlayer(id)
 
 
-            this.io.to(roomId).emit(MESSAGE.LEFT_ROOM, id)
+            const roomData: GameRoomBase | null = room ? room?.getRoomData() : null
+
+
+            this.io.to(roomId).emit(MESSAGE.LEFT_ROOM, roomData)
 
 
             rooms.delete(roomId)
@@ -139,6 +142,25 @@ class WebSocketServer {
 
 
             this.io.to(roomId).emit(MESSAGE.MAP, newGrid)
+        })
+
+
+        this.socket.on(MESSAGE.MAP_INITIALIZED, (data: DataWIthRoomNumber): void => {
+
+            const { roomNumber } = data
+            const roomId: string = GameRoom.getRoomId(roomNumber)
+            const room = this.rooms.get(roomId)
+
+            const roomData: GameRoomBase | null = room ? room?.getRoomData() : null
+
+
+            room && room.startTimer(() => {
+
+                this.io.to(roomId).emit(MESSAGE.TURN, room?.getRoomData())
+            })
+
+
+            this.io.to(roomId).emit(MESSAGE.TURN, roomData)
         })
 
 

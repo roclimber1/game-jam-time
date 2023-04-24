@@ -6,9 +6,11 @@ export enum MESSAGE {
     CHAT_MESSAGE = 'CHAT_MESSAGE',
     CONNECT = 'connect',
     INIT_MAP = 'INIT_MAP',
+    LEFT_ROOM = 'LEFT_ROOM',
     MAP = 'MAP',
+    MAP_INITIALIZED = 'MAP_INITIALIZED',
     SET_ROOMS_DATA = 'SET_ROOMS_DATA',
-    LEFT_ROOM = 'LEFT_ROOM'
+    TURN = 'TURN'
 }
 
 
@@ -45,7 +47,23 @@ export enum POINTS {
 }
 
 
+export enum ENERGY {
+    MOVE_SIMPLE = 1,
+    MOVE_DIAGONAL = 2,
+    STONE = 2,
+    WOOD = 2,
+    TRAP = 4
+}
+
+
 export const INIT_RESOURCES: Resources = {
     stone: 0,
     wood: 0
+}
+
+
+export enum SETTINGS {
+    ENERGY = 4,
+    TOTAL_MOVES = 2 * 2, // 30 * 2
+    TURN_TIME = 7
 }
