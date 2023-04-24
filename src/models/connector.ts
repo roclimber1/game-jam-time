@@ -57,8 +57,6 @@ class Connector implements AbstractConnector {
 
                     this.dispatchCustomEvent(CUSTOM_EVENT.CONNECT, data)
 
-                    console.debug('🚀 ~ file: connector.ts:59 ~ Connector ~ CUSTOM_EVENT.CONNECT:', CUSTOM_EVENT.CONNECT)
-
                 }
             }
         },
@@ -74,17 +72,29 @@ class Connector implements AbstractConnector {
             callback: (data: Array<GridCell>) => {
 
                 this.dispatchCustomEvent(CUSTOM_EVENT.SET_MAP, data)
-
-                console.debug('🚀 ~ file: connector.ts:75 ~ Connector ~ CUSTOM_EVENT.SET_MAP:', CUSTOM_EVENT.SET_MAP)
             }
         },
         {
             type: MESSAGE.LEFT_ROOM,
-            callback: (id: string) => {
+            callback: (data: GameRoomBase) => {
 
-                this.dispatchCustomEvent(CUSTOM_EVENT.WAITING, {})
+                this.dispatchCustomEvent(CUSTOM_EVENT.OPPONENT_FLED, data)
+            }
+        },
+        {
+            type: MESSAGE.TURN,
+            callback: (data: GameRoomBase) => {
 
-                console.debug('🚀 ~ file: connector.ts:82 ~ Connector ~ CUSTOM_EVENT.WAITING:', CUSTOM_EVENT.WAITING)
+                const { isOver } = data
+
+                if (isOver) {
+
+                    this.dispatchCustomEvent(CUSTOM_EVENT.GAME_OVER_MOVES_LIMIT, data)
+
+                } else {
+
+                    this.dispatchCustomEvent(CUSTOM_EVENT.TURN, data)
+                }
             }
         }
     ]
@@ -125,6 +135,15 @@ class Connector implements AbstractConnector {
         this.ws.sendData(
             this.addRoomNumber<Data>(data),
             MESSAGE.INIT_MAP
+        )
+    }
+
+
+    public mapInitialized() {
+
+        this.ws.sendData(
+            this.addRoomNumber({}),
+            MESSAGE.MAP_INITIALIZED
         )
     }
 }

@@ -13,3 +13,15 @@ export interface Listener<Data = any> {
     type: MESSAGE,
     callback: (data: Data) => void
 }
+
+
+
+export type RenderGameOverScreenParameters = {
+    body: string,
+    buttonText: string,
+    element: HTMLElement,
+    icon: string,
+    startNewGame: () => void,
+    text: string,
+    title: string
+}

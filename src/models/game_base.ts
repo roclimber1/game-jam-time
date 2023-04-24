@@ -11,17 +11,8 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 
 
 
+import type { RenderGameOverScreenParameters } from '../interfaces'
 
-
-type RenderGameOverScreenParameters = {
-    body: string,
-    buttonText: string,
-    element: HTMLElement,
-    icon: string,
-    startNewGame: () => void,
-    text: string,
-    title: string
-}
 
 
 
@@ -173,7 +164,7 @@ class GameBase {
 
         innerDiv.className = 'flex flex-col justify-center items-center m-3'
         innerDiv.innerHTML = `<div class="text-9xl">${icon}</div>
-        <div class="text-7xl m-3 p-3">${title}</div>
+        <div class="text-7xl m-3 p-3 text-center">${title}</div>
 
         <div class="m-3 p-3 text-2xl">${text}</div>
         <div class="m-3 p-3 text-2xl">${body}</div>`
