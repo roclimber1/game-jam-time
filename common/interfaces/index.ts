@@ -1,5 +1,5 @@
 
-import { ITEM } from '../constants'
+import { ACTION, ITEM } from '../constants'
 
 
 export interface ChatMessage {
@@ -54,9 +54,13 @@ export type Resources = {
 
 
 export interface GameEngineBase {
+    energy: Array<number>,
     firstPlayer?: boolean,
+    moves: Array<number>,
+    resources: Array<Resources>,
     score: Array<number>,
-    resources: Array<Resources>
+    trapped: Array<number>,
+    traps: Array<Array<GridCell>>
 }
 
 
@@ -73,4 +77,11 @@ export type BoulderParameters = CommonParameters & {
 
 export type TreeParameters = CommonParameters & {
     height: number
+}
+
+
+export interface ActionParameters {
+    id: string,
+    position: GridCell,
+    type: ACTION
 }

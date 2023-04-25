@@ -92,7 +92,7 @@ class GameBase {
         const initialDirLightPositionX = -100
         const initialDirLightPositionY = -100
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.5)
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.3)
 
         dirLight.position.set(initialDirLightPositionX, initialDirLightPositionY, 200)
         dirLight.castShadow = true
@@ -107,6 +107,7 @@ class GameBase {
 
         dirLight.shadow.mapSize.width = 2048
         dirLight.shadow.mapSize.height = 2048
+
         const d = 500
 
         dirLight.shadow.camera.left = - d

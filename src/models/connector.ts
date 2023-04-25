@@ -8,7 +8,7 @@ import WebSocketClient from './web_socket_client'
 
 
 import type { AbstractConnector, Listener } from '../interfaces'
-import type { ChatMessage, DataWIthRoomNumber, GameRoomBase, GridCell } from '../../common/interfaces'
+import type { ChatMessage, DataWIthRoomNumber, GameRoomBase, GridCell, ActionParameters } from '../../common/interfaces'
 
 
 
@@ -144,6 +144,15 @@ class Connector implements AbstractConnector {
         this.ws.sendData(
             this.addRoomNumber({}),
             MESSAGE.MAP_INITIALIZED
+        )
+    }
+
+
+    public sendAction(parameters: ActionParameters) {
+
+        this.ws.sendData(
+            this.addRoomNumber<ActionParameters>(parameters),
+            MESSAGE.ACTION
         )
     }
 }

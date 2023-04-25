@@ -1,10 +1,12 @@
 
 
 import { SETTINGS } from '../../common/constants'
+import { ICON } from '../constants'
 
 
 
 import type Connector from '@/src/models/connector'
+import type { AddInfoBlockParameters } from '../interfaces'
 
 
 
@@ -29,11 +31,22 @@ enum PANEL {
     TOP ='top-panel'
 }
 
+
 enum ELEMENT {
     SCORE = 'score',
     CHAT_BUTTON = 'chat-button',
     CHAT_INPUT = 'chat-input'
 }
+
+
+const ICONS: Array<ICON> = [
+    ICON.MOVE,
+    ICON.STONE,
+    ICON.STONE_GATHERING,
+    ICON.TRAP,
+    ICON.WOOD,
+    ICON.WOOD_GATHERING
+]
 
 
 const DEFAULT_TICK = 100
@@ -109,6 +122,21 @@ class ControlPanel {
         this.controls.rightPanel = document.getElementById(PANEL.RIGHT)
 
         this.controls.progressBarPanel = document.getElementById(PANEL.PROGRESS_BAR_PANEL)
+
+
+        this.initIcons()
+    }
+
+
+    private initIcons() {
+
+        ICONS.forEach((icon: ICON) => {
+
+            const element: HTMLElement = document.getElementById(icon) as HTMLElement
+            const tokens: Array<string> = 'w-20 h-20 rounded-lg bg-slate-700 m-2 flex flex-row justify-center text-4xl items-center'.split(' ')
+
+            element.classList.add(...tokens)
+        })
     }
 
 
@@ -123,15 +151,26 @@ class ControlPanel {
     private updateProgressBar(opponent: boolean) {
 
         const element: HTMLElement = this.getProgressBarElement()
+        const textBlock: HTMLElement = document.getElementById('progress-bar-text') as HTMLElement
 
 
         if (opponent) {
 
             element?.classList.add('progress-bar-opponent')
 
+            if (textBlock) {
+
+                textBlock.innerHTML = 'Now your opponent\'s turn'
+            }
+
         } else {
 
             element?.classList.remove('progress-bar-opponent')
+
+            if (textBlock) {
+
+                textBlock.innerHTML = 'Now your turn'
+            }
         }
     }
 
@@ -261,6 +300,79 @@ class ControlPanel {
 
 
         return waitingRoomBlock
+    }
+
+
+    public updateIcon(icon: ICON, grayscale: boolean, value: number) {
+
+        const element: HTMLElement = document.getElementById(icon) as HTMLElement
+        const counter: HTMLElement | null = element.querySelector('.icon-text')
+
+
+        element.style.filter = grayscale ? 'grayscale(1)' : 'grayscale(0)'
+
+        if (counter) {
+
+            counter.innerHTML = String(value)
+        }
+    }
+
+
+    private addInfoBlock(parameters: AddInfoBlockParameters): HTMLDivElement {
+
+        const { icon = '', text, className = 'bonus-animation', autoRemove = true, autoRemoveTimeout = 2000 } = parameters
+
+        const item: HTMLDivElement = document.createElement('div')
+
+        item.className = className
+        item.innerHTML = icon ? `${icon} ${text}` : text
+
+        autoRemove && setTimeout(() => item.remove(), autoRemoveTimeout)
+
+        return item
+    }
+
+
+    public addHoveringInfoBlock(event: MouseEvent) {
+
+        return (parameters: AddInfoBlockParameters) => {
+
+            const { clientX, clientY } = event
+
+            const item: HTMLDivElement = this.addInfoBlock(parameters)
+
+            item.className = `${item.className} h-fit w-fit p-2 absolute flex justify-center rounded-lg bg-slate-800 opacity-80 text-3xl`
+
+            const size = 120
+
+            item.style.left = Math.round(clientX - size / 2) + 'px'
+            item.style.top = Math.round(clientY - size / 2) + 'px'
+
+            document.body.appendChild(item)
+        }
+    }
+
+
+    public updateBottomPanel(parameters: AddInfoBlockParameters) {
+
+        if (this.controls.bottomPanel) {
+
+            const item: HTMLDivElement = this.addInfoBlock(parameters)
+
+            item.className = `${item.className} h-full w-full p-2 mr-3 flex flex-row justify-center items-center text-lg`
+
+            this.controls.bottomPanel.innerHTML = ''
+            this.controls.bottomPanel.appendChild(item)
+        }
+    }
+
+
+    public clearBottomPanel() {
+
+        if (this.controls.bottomPanel) {
+
+            this.controls.bottomPanel.innerHTML = ''
+        }
     }
 
 }

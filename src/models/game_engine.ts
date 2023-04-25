@@ -1,18 +1,31 @@
 
-import { INIT_RESOURCES } from '../../common/constants'
+import { ACTION } from '../../common/constants'
 import { CUSTOM_EVENT, TEXTS } from '../constants'
 
+import Color from '../../common/models/color'
+import Field from './field'
+import GameEngineAbstract from '../../common/models/game_engine_abstract'
 
 
-import type { GameEngineBase, Resources } from '../../common/interfaces'
+
+import type { GameRoomBase, GridCell, Resources } from '../../common/interfaces'
 import type { RenderGameOverScreenParameters } from '../interfaces'
 
 
 
-class GameEngine implements GameEngineBase {
+class GameEngine extends GameEngineAbstract {
+
+    public data!: GameRoomBase
 
     public score!: Array<number>
     public resources!: Array<Resources>
+
+    public energy!: Array<number>
+    public moves!: Array<number>
+
+
+    public unitsPositions: Array<GridCell> = []
+
 
     public static yourIndex = 0
     public static opponentIndex = 1
@@ -22,58 +35,119 @@ class GameEngine implements GameEngineBase {
 
     constructor() {
 
-        this.init()
+        super()
     }
 
 
-    private init() {
 
-        this.score = [0,0]
-        this.resources = [INIT_RESOURCES, INIT_RESOURCES]
+    public getInitColors() {
 
-        this.firstPlayer = false
-    }
+        let opponentColor: number = Color.units[0]
+        let unitColor: number = Color.units[1]
 
+        if (this.firstPlayer) {
 
-    public updateFirstPlayer(id: string, firstId: string): boolean {
-
-        this.firstPlayer = (id == firstId)
-
-        return this.firstPlayer
-    }
-
-
-    public getGameData(): GameEngineBase {
-
-        return {
-            firstPlayer: this.firstPlayer,
-            resources: this.resources,
-            score: this.score
+            opponentColor = Color.units[1]
+            unitColor = Color.units[0]
         }
+
+        return [
+            unitColor,
+            opponentColor
+        ]
     }
 
 
-    public updateGameData(data: GameEngineBase) {
+    public getInitPositions() {
 
-        const { score, resources } = data
+        let opponentPosition: GridCell = Field.getStartTile(-1)
+        let unitPosition: GridCell = Field.getStartTile()
 
-        this.score = score
-        this.resources = resources
+
+        if (this.firstPlayer) {
+
+            opponentPosition = Field.getStartTile()
+            unitPosition = Field.getStartTile(-1)
+        }
+
+
+        this.unitsPositions = [
+            unitPosition,
+            opponentPosition
+        ]
+
+        return this.unitsPositions
+    }
+
+
+    public updateUnitPosition(cell: GridCell, isOpponent: boolean) {
+
+        const index: number = isOpponent ? GameEngine.opponentIndex : GameEngine.yourIndex
+
+        this.unitsPositions[index] = cell
+    }
+
+
+    public getUnitPosition(isOpponent: boolean): GridCell {
+
+        const index: number = isOpponent ? GameEngine.opponentIndex : GameEngine.yourIndex
+
+        return this.unitsPositions[index]
+    }
+
+
+
+    public getMyEnergy(): number {
+
+        return this.energy[GameEngine.yourIndex]
+    }
+
+
+    public getMyScore(): number {
+
+        return this.score[GameEngine.yourIndex]
+    }
+
+
+    public getMyMoves(): number {
+
+        return this.moves[GameEngine.yourIndex]
+    }
+
+
+    public getMyResources(): Resources {
+
+        return this.resources[GameEngine.yourIndex]
+    }
+
+
+    public checkActionAvailability(action: ACTION): boolean {
+
+        const energy: number = this.getMyEnergy()
+        const resources: Resources = this.getMyResources()
+
+
+        return super.checkActionAvailability(action, energy, resources)
     }
 
 
 
     private getScoreData(): string {
 
-        const showScore: boolean = (this.score[GameEngine.yourIndex] > 0)
-            || (this.score[GameEngine.opponentIndex] > 0)
+        const myScore: number = this.getMyScore()
+        const opponentScore: number = this.score[GameEngine.opponentIndex]
+
+
+        const showScore: boolean = (myScore > 0)
+            || (opponentScore > 0)
+
 
         const scoreData: string = showScore ? `<div>
-                ${TEXTS.YOUR_SCORE}: ${this.score[GameEngine.yourIndex]}
+                ${TEXTS.YOUR_SCORE}: ${myScore}
             </div>
 
             <div>
-                ${TEXTS.OPPONENT_SCORE}: ${this.score[GameEngine.opponentIndex]}
+                ${TEXTS.OPPONENT_SCORE}: ${opponentScore}
             </div>` : ''
 
 
@@ -81,11 +155,15 @@ class GameEngine implements GameEngineBase {
     }
 
 
-    public checkIfYouWinner(): boolean {
+    public checkIfYouWinner(): Array<boolean> {
 
-        const youWinner: boolean = (this.score[GameEngine.yourIndex] > this.score[GameEngine.opponentIndex])
+        const myScore: number = this.getMyScore()
+        const opponentScore: number = this.score[GameEngine.opponentIndex]
 
-        return youWinner
+        const youWinner: boolean = (myScore > opponentScore)
+        const isDraw: boolean = (myScore == opponentScore)
+
+        return [youWinner, isDraw]
     }
 
 
@@ -94,7 +172,13 @@ class GameEngine implements GameEngineBase {
 
         let parameters: Partial<RenderGameOverScreenParameters> = {}
 
-        const youWinner: boolean = this.checkIfYouWinner()
+        const [youWinner, isDraw] = this.checkIfYouWinner()
+
+        const textDraw: string = (isDraw ? TEXTS.DRAW_POINTS : TEXTS.YOU_LOSE_POINTS)
+        const text: string = (youWinner ? TEXTS.YOU_WIN_POINTS : textDraw)
+
+        const iconDraw: string = (isDraw ? '🪅' : '🌀')
+        const icon: string = youWinner ? '🏆' : iconDraw
 
 
         switch (event) {
@@ -117,9 +201,9 @@ class GameEngine implements GameEngineBase {
                 parameters = {
                     body: this.getScoreData(),
                     buttonText: youWinner ? TEXTS.START_NEW_GAME : TEXTS.TRY_AGAIN,
-                    icon: youWinner ? '🏆' : '🌀',
+                    icon,
                     startNewGame: () => window.location.reload(),
-                    text: youWinner ? TEXTS.YOU_WIN_POINTS : TEXTS.YOU_LOSE_POINTS,
+                    text,
                     title: TEXTS.GAME_OVER_MOVES_LIMIT
                 }
 

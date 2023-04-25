@@ -44,10 +44,8 @@ body {
         }
 
         &-energy {
-            stroke: darken(#ec4899, 5%);
-            fill: #ec4899;
-
-            // fill: #6366f1;
+            stroke: darken(#6366f1, 5%);
+            fill: #6366f1;
         }
     }
 }
@@ -57,13 +55,28 @@ body {
     animation: flying 2s 0s 1;
 }
 
-.hand-animate {
+.hovering-animation {
     animation: hovering 2s 0s infinite;
 }
 
-.hourglass-animated {
+.rotation-animation {
     animation: rotation 2s 0s infinite;
 }
+
+.disappearing-animation {
+    animation: disappearing 2s 0s 1;
+}
+
+
+@keyframes disappearing {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
 
 @keyframes hovering {
     0% {

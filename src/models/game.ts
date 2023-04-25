@@ -28,18 +28,47 @@ import ControlPanel from './control_panel'
 
 
 import { CUSTOM_EVENT } from '../constants'
-import { ITEM } from '../../common/constants'
+import { ACTION, ITEM, ENERGY } from '../../common/constants'
+
 
 
 
 import type { GridCell, GameEngineBase, TreeParameters, BoulderParameters, GameRoomBase } from '@/common/interfaces'
-import type { RenderGameOverScreenParameters } from '../interfaces'
+import type { AddInfoBlockParameters, RenderGameOverScreenParameters } from '../interfaces'
 
 
 
 
 type RenderItemsParameters<Type> = {
     item: Type
+}
+
+
+type GameEventHandler = (event: Event) => void
+
+
+type GameEventListeners = {
+    handleClick: (event: MouseEvent) => void,
+    handleGameConnect: GameEventHandler,
+    handleGameOpponentFled: GameEventHandler,
+    handleGameOverMovesLimit: GameEventHandler,
+    handleGameSetMap: GameEventHandler,
+    handleGameTurn: GameEventHandler,
+    handleMouseMove: (event: MouseEvent) => void,
+}
+
+
+const defaultGameEventHandler: GameEventHandler = (event) => { /* * */ }
+
+
+const gameEventListeners: GameEventListeners = {
+    handleClick: (event: MouseEvent) => { /* * */ },
+    handleGameConnect: defaultGameEventHandler,
+    handleGameOpponentFled: defaultGameEventHandler,
+    handleGameOverMovesLimit: defaultGameEventHandler,
+    handleGameSetMap: defaultGameEventHandler,
+    handleGameTurn: defaultGameEventHandler,
+    handleMouseMove: (event: MouseEvent) => { /* * */ }
 }
 
 
@@ -99,7 +128,7 @@ class Game extends GameBase {
         this.renderer.render(this.scene, this.camera)
 
 
-        this.miniGame = new MiniGame()
+        // this.miniGame = new MiniGame()
         this.gameEngine = new GameEngine()
 
         this.gameData = this.gameEngine.getGameData()
@@ -137,49 +166,9 @@ class Game extends GameBase {
 
 
 
-    private addBonusInfoBlock(event: MouseEvent) {
-
-        type AddBonusInfoBlockParameters = {
-            icon: string
-            text: string
-        }
-
-        return (parameters: AddBonusInfoBlockParameters) => {
-
-            const { clientX, clientY } = event
-            const { icon, text } = parameters
-
-
-            const item: HTMLDivElement = document.createElement('div')
-
-
-            item.className = 'h-fit w-fit p-2 absolute flex justify-center rounded-lg bg-slate-800 opacity-80 text-3xl bonus-animation'
-
-
-            const size = 120
-
-            item.style.left = Math.round(clientX - size / 2) + 'px'
-            item.style.top = Math.round(clientY - size / 2) + 'px'
-
-
-
-            item.innerHTML = `${icon} ${text}`
-
-
-            document.body.appendChild(item)
-
-
-            setTimeout(() => item.remove(), 2000)
-        }
-    }
-
-
-
     private showGameOverScreen(isWinner = false, data: GameRoomBase, event: CUSTOM_EVENT) {
 
-        const { gameData } = data
-
-        this.gameEngine.updateGameData(gameData)
+        this.gameEngine.updateGameData(data)
 
 
         const waitingRoomBlock: HTMLElement = this.controlPanel.changeWaitingRoom(true)
@@ -200,27 +189,212 @@ class Game extends GameBase {
         this.controlPanel.gameOver()
 
 
-        const youWinner: boolean = this.gameEngine.checkIfYouWinner()
+        const [youWinner, isTie] = this.gameEngine.checkIfYouWinner()
 
 
-        if (youWinner || isWinner) {
+        if (youWinner || isTie || isWinner) {
 
             this.congratulations()
         }
+
+
+        this.removeEventListeners()
     }
 
+
+
+    private removeEventListeners() {
+
+        document.removeEventListener('mousemove', gameEventListeners.handleMouseMove)
+
+        document.removeEventListener('click', gameEventListeners.handleClick)
+
+        document.removeEventListener(CUSTOM_EVENT.TURN, gameEventListeners.handleGameTurn)
+
+        document.removeEventListener(CUSTOM_EVENT.CONNECT, gameEventListeners.handleGameConnect)
+
+        document.removeEventListener(CUSTOM_EVENT.GAME_OVER_MOVES_LIMIT, gameEventListeners.handleGameOverMovesLimit)
+
+        document.removeEventListener(CUSTOM_EVENT.OPPONENT_FLED, gameEventListeners.handleGameOpponentFled)
+
+        document.removeEventListener(CUSTOM_EVENT.SET_MAP, gameEventListeners.handleGameSetMap)
+    }
+
+
+    private isOpponentTurn(): boolean {
+
+        const { currentTurnId } = this.gameEngine.data
+
+        const isOpponent: boolean = (currentTurnId != this.connector.userId)
+
+
+        return isOpponent
+    }
+
+
+
+
+    private getAvailabilityBlock(available: boolean) {
+
+        return (availabilityText: string) => (baseText: string): string => {
+
+            let block = `<div class="text-lime-700">${baseText}</div>`
+
+
+            if (!available) {
+
+                block = `<div class="text-orange-700">
+                    ${availabilityText}
+                </div>`
+            }
+
+            return block
+        }
+    }
+
+
+    private getPointsInfoBlock(energy: ENERGY) {
+
+        return `<div>
+            You need <span class="text-indigo-500">${energy} points of energy</span>
+        </div>`
+    }
+
+
+    private hoverItem!: HTMLElement
 
 
     private initEventListeners() {
 
 
-        document.addEventListener('click', (event: MouseEvent) => {
+        gameEventListeners.handleMouseMove = (event: MouseEvent) => {
+
+            // '⛏️🪓⚒️🔨🛠️🔧🪜🛡️🪚🏹🗡️⚔️💣🪙⏳👣'
 
 
             if (this.selectedTile) {
 
+                const nearestTile: boolean = Field.checkNearestTile(this.selectedTile, this.unit)
 
-                // '🪓⛏️⚒️🔨🛠️🔧🪜🛡️🪚🏹🗡️⚔️💣🪙⏳👣'
+
+                const isOpponent = this.isOpponentTurn()
+
+                let parameters: AddInfoBlockParameters | null = null
+                let available: boolean
+
+                const availabilityText: string = (isOpponent ? 'It isn\'t available now. Wait for your turn' : 'You have not enough energy')
+
+
+                const baseParameters: Partial<AddInfoBlockParameters> = {
+                    autoRemove: false,
+                    className: 'flex-col'
+                }
+
+
+                if (!this.selectedTile.occupied) {
+
+                    const baseText = 'You could do it'
+
+
+                    if (nearestTile) {
+
+                        available = this.gameEngine.checkActionAvailability(ACTION.MOVE_SIMPLE) && !isOpponent
+
+                        parameters = {
+                            ...baseParameters,
+                            text: `<div>
+                                    You could move here
+                                </div>
+
+                                ${this.getPointsInfoBlock(ENERGY.MOVE_SIMPLE)}
+
+                                ${this.getAvailabilityBlock(available)(availabilityText)(baseText)}
+                                `
+                        } as AddInfoBlockParameters
+
+                    } else {
+
+                        available = this.gameEngine.checkActionAvailability(ACTION.TRAP) && !isOpponent
+
+                        parameters = {
+                            ...baseParameters,
+                            text: `<div>
+                                    You could create a trap for your opponent
+                                </div>
+
+                                ${this.getPointsInfoBlock(ENERGY.TRAP)}
+
+                                ${this.getAvailabilityBlock(available)(availabilityText)(baseText)}
+                                `
+                        } as AddInfoBlockParameters
+                    }
+                } else {
+
+                    const baseText = 'You could gather it'
+
+
+                    switch (this.selectedTile.type) {
+
+                        case ITEM.BOULDER:
+
+                            available = this.gameEngine.checkActionAvailability(ACTION.STONE) && !isOpponent
+
+                            parameters = {
+                                ...baseParameters,
+                                text: `<div>
+                                        You could gather 1 stone (+1 🪨)
+                                    </div>
+
+                                    ${this.getPointsInfoBlock(ENERGY.STONE)}
+
+                                    ${this.getAvailabilityBlock(available)(availabilityText)(baseText)}
+                                    `
+                            } as AddInfoBlockParameters
+
+                            break
+
+                        case ITEM.TREE:
+
+                            available = this.gameEngine.checkActionAvailability(ACTION.WOOD) && !isOpponent
+
+                            parameters = {
+                                ...baseParameters,
+                                text: `<div>
+                                        You could gather 1 wood (+1 🪵)
+                                    </div>
+
+                                    ${this.getPointsInfoBlock(ENERGY.WOOD)}
+
+                                    ${this.getAvailabilityBlock(available)(availabilityText)(baseText)}
+                                    `
+                            } as AddInfoBlockParameters
+
+                            break
+                    }
+                }
+
+
+                if (parameters) {
+
+                    this.controlPanel.updateBottomPanel(parameters)
+                }
+
+            }
+        }
+
+
+        document.addEventListener('mousemove', gameEventListeners.handleMouseMove)
+
+
+        gameEventListeners.handleClick = (event: MouseEvent) => {
+
+            if (this.isOpponentTurn()) {
+
+                return
+            }
+
+
+            if (this.selectedTile) {
 
 
                 const nearestTile: boolean = Field.checkNearestTile(this.selectedTile, this.unit)
@@ -242,7 +416,7 @@ class Game extends GameBase {
 
                             this.removeItem(this.selectedTile)
 
-                            this.addBonusInfoBlock(event)({ icon: '🪨', text: '+1' })
+                            this.controlPanel.addHoveringInfoBlock(event)({ icon: '🪨', text: '+1' })
 
                             break
 
@@ -250,30 +424,39 @@ class Game extends GameBase {
 
                             this.removeItem(this.selectedTile)
 
-                            this.addBonusInfoBlock(event)({ icon: '🪵', text: '+1' })
+                            this.controlPanel.addHoveringInfoBlock(event)({ icon: '🪵', text: '+1' })
 
                             break
                     }
                 }
             }
-        })
+        }
+
+        document.addEventListener('click', gameEventListeners.handleClick)
 
 
-        document.addEventListener(CUSTOM_EVENT.TURN, (event) => {
+        gameEventListeners.handleGameTurn = (event: Event) => {
 
             const { data } = (event as CustomEvent)?.detail || {}
-            const { currentTurnId, movesCounter } = data
+            const { movesCounter } = data
 
-            const isOpponent: boolean = (currentTurnId != this.connector.userId)
+
+            this.gameEngine.updateGameData(data)
+
+
+            const isOpponent: boolean = this.isOpponentTurn()
 
 
             this.controlPanel.startTimer(isOpponent)
             this.controlPanel.updateMovesCounter(movesCounter)
-        })
+        }
 
 
-        document.addEventListener(CUSTOM_EVENT.CONNECT, (event) => {
+        document.addEventListener(CUSTOM_EVENT.TURN, gameEventListeners.handleGameTurn)
 
+
+
+        gameEventListeners.handleGameConnect = (event: Event) => {
 
             const { data } = (event as CustomEvent)?.detail || {}
             const { currentTurnId } = data
@@ -284,47 +467,57 @@ class Game extends GameBase {
 
             if (!this.mapInitialized) {
 
-                if (this.gameData.firstPlayer) {
+                const [unitPosition, opponentPosition] = this.gameEngine.getInitPositions()
+                const [unitColor, opponentColor] = this.gameEngine.getInitColors()
 
-                    this.unit = this.renderUnit(Field.getStartTile(-1), Color.units[1])
-                    this.opponent = this.renderUnit(Field.getStartTile(), Color.units[0])
-                } else {
-
-                    this.opponent = this.renderUnit(Field.getStartTile(-1), Color.units[1])
-                    this.unit = this.renderUnit(Field.getStartTile(), Color.units[0])
-                }
+                this.unit = this.renderUnit(unitPosition, unitColor)
+                this.opponent = this.renderUnit(opponentPosition, opponentColor)
 
 
-                this.addDirectionalLight(this.unit)
-
+                this.addDirectionalLight()
 
                 this.scene.add(this.unit)
             }
 
             this.connector.initMap({ grid: Field.grid })
-        })
+        }
+
+
+        document.addEventListener(CUSTOM_EVENT.CONNECT, gameEventListeners.handleGameConnect)
 
 
 
-        document.addEventListener(CUSTOM_EVENT.GAME_OVER_MOVES_LIMIT, (event) => {
+        gameEventListeners.handleGameOverMovesLimit = (event: Event) => {
 
             const { data } = (event as CustomEvent)?.detail || {}
 
             this.showGameOverScreen(false, data as GameRoomBase, CUSTOM_EVENT.GAME_OVER_MOVES_LIMIT)
-        })
+        }
+
+
+        document.addEventListener(CUSTOM_EVENT.GAME_OVER_MOVES_LIMIT, gameEventListeners.handleGameOverMovesLimit)
 
 
 
-        document.addEventListener(CUSTOM_EVENT.OPPONENT_FLED, (event) => {
+
+        gameEventListeners.handleGameOpponentFled = (event: Event) => {
 
             const { data } = (event as CustomEvent)?.detail || {}
-
-            this.showGameOverScreen(true, data as GameRoomBase, CUSTOM_EVENT.OPPONENT_FLED)
-        })
+            const { isOver } = data
 
 
+            if (!isOver) {
 
-        document.addEventListener(CUSTOM_EVENT.SET_MAP, (event) => {
+                this.showGameOverScreen(true, data as GameRoomBase, CUSTOM_EVENT.OPPONENT_FLED)
+            }
+        }
+
+
+        document.addEventListener(CUSTOM_EVENT.OPPONENT_FLED, gameEventListeners.handleGameOpponentFled)
+
+
+
+        gameEventListeners.handleGameSetMap = (event: Event) => {
 
             const { data } = (event as CustomEvent)?.detail || {}
 
@@ -357,7 +550,10 @@ class Game extends GameBase {
                     this.connector.mapInitialized()
                 }
             }
-        })
+        }
+
+
+        document.addEventListener(CUSTOM_EVENT.SET_MAP, gameEventListeners.handleGameSetMap)
 
     }
 
@@ -378,6 +574,15 @@ class Game extends GameBase {
 
 
     public animation() {
+
+        const { isOver } = this.gameEngine?.data || {}
+        const condition: boolean = isOver // || this.isOpponentTurn()
+
+        if (condition) {
+
+            return
+        }
+
 
         this.rayCaster.setFromCamera(this.pointer, this.camera)
 
