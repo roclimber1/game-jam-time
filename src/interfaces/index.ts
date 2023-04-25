@@ -25,3 +25,13 @@ export type RenderGameOverScreenParameters = {
     text: string,
     title: string
 }
+
+
+
+export type AddInfoBlockParameters = {
+    autoRemove?: boolean,
+    autoRemoveTimeout?: number,
+    className?: string,
+    icon?: string,
+    text: string
+}

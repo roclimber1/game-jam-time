@@ -22,5 +22,19 @@ export const TEXTS = {
     GAME_OVER_MOVES_LIMIT: 'The game is over due to the move amount limitation!',
     YOU_WIN_POINTS: 'You win! You have more points than your opponent! 💫',
     YOU_LOSE_POINTS:'You lose! You have less points than your opponent!',
+    DRAW_POINTS:'It is a draw! You have the same amount of points as your opponent!',
     TRY_AGAIN: 'Try again 🕹️'
+}
+
+
+
+
+
+export enum ICON {
+    MOVE = 'icon-move',
+    STONE = 'icon-stone',
+    STONE_GATHERING = 'icon-stone-gathering',
+    TRAP = 'icon-trap',
+    WOOD = 'icon-wood',
+    WOOD_GATHERING = 'icon-wood-gathering'
 }

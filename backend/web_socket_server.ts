@@ -6,7 +6,7 @@ import { MESSAGE } from '../common/constants'
 
 
 import type { Server, Socket } from 'socket.io'
-import type { ChatMessage, DataWIthRoomNumber, GameRoomBase, GridCell, GridCellData } from '../common/interfaces'
+import type { ActionParameters, ChatMessage, DataWIthRoomNumber, GameRoomBase, GridCell, GridCellData } from '../common/interfaces'
 
 
 
@@ -161,6 +161,27 @@ class WebSocketServer {
 
 
             this.io.to(roomId).emit(MESSAGE.TURN, roomData)
+        })
+
+
+        this.socket.on(MESSAGE.ACTION, (data: DataWIthRoomNumber<ActionParameters>): void => {
+
+            const { roomNumber } = data
+            const roomId: string = GameRoom.getRoomId(roomNumber)
+            const room = this.rooms.get(roomId)
+
+
+            const performed: boolean = room?.performAction(data) as boolean
+            const roomData: GameRoomBase | null = room ? room?.getRoomData() : null
+
+            if (performed) {
+
+                this.io.to(roomId).emit(MESSAGE.ACTION, {
+                    roomData,
+                    actionData: data,
+                    performed
+                })
+            }
         })
 
 

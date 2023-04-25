@@ -3,6 +3,7 @@ import { Resources } from '../interfaces'
 
 
 export enum MESSAGE {
+    ACTION = 'ACTION',
     CHAT_MESSAGE = 'CHAT_MESSAGE',
     CONNECT = 'connect',
     INIT_MAP = 'INIT_MAP',
@@ -41,18 +42,19 @@ export enum RESOURCE {
 
 
 export enum POINTS {
-    MOVES = 2,
-    RESOURCES = 1,
-    TRAP = 5,
+    MOVE_DIAGONAL = 15,
+    MOVE_SIMPLE = 10,
+    RESOURCES = 15,
+    TRAP = 50,
 }
 
 
 export enum ENERGY {
-    MOVE_SIMPLE = 1,
-    MOVE_DIAGONAL = 2,
-    STONE = 2,
-    WOOD = 2,
-    TRAP = 4
+    MOVE_DIAGONAL = 20,
+    MOVE_SIMPLE = 15,
+    STONE = 20,
+    TRAP = 30,
+    WOOD = 15
 }
 
 
@@ -63,7 +65,20 @@ export const INIT_RESOURCES: Resources = {
 
 
 export enum SETTINGS {
-    ENERGY = 4,
-    TOTAL_MOVES = 2 * 2, // 30 * 2
+    ENERGY = 35,
+    TOTAL_MOVES = 4 * 2, // 30 * 2
+    TRAP_STONE = 2,
+    TRAP_TURNS = 2,
+    TRAP_WOOD = 3,
+    TURN_MOVES = 2,
     TURN_TIME = 7
+}
+
+
+export enum ACTION {
+    MOVE_DIAGONAL = 'MOVE_DIAGONAL',
+    MOVE_SIMPLE = 'MOVE_SIMPLE',
+    STONE = 'STONE',
+    TRAP = 'TRAP',
+    WOOD = 'WOOD'
 }
