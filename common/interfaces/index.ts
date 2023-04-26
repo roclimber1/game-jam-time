@@ -21,7 +21,8 @@ export interface GameRoomBase {
     map: Array<GridCell>,
     movesCounter: number,
     players: Array<PlayerBase>,
-    roomNumber: number
+    roomNumber: number,
+    winner?: string
 }
 
 
@@ -84,4 +85,11 @@ export interface ActionParameters {
     id: string,
     position: GridCell,
     type: ACTION
+}
+
+
+export type ActionData = {
+    actionData: DataWIthRoomNumber<ActionParameters>,
+    performed?: boolean,
+    roomData: GameRoomBase
 }

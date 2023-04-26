@@ -1,5 +1,5 @@
 
-import { ACTION } from '../../common/constants'
+import { ACTION, ACTIONS } from '../../common/constants'
 import { CUSTOM_EVENT, TEXTS } from '../constants'
 
 import Color from '../../common/models/color'
@@ -8,34 +8,36 @@ import GameEngineAbstract from '../../common/models/game_engine_abstract'
 
 
 
-import type { GameRoomBase, GridCell, Resources } from '../../common/interfaces'
+import type { GridCell, PlayerBase, Resources } from '../../common/interfaces'
 import type { RenderGameOverScreenParameters } from '../interfaces'
 
 
 
 class GameEngine extends GameEngineAbstract {
 
-    public data!: GameRoomBase
-
-    public score!: Array<number>
-    public resources!: Array<Resources>
-
-    public energy!: Array<number>
-    public moves!: Array<number>
-
-
-    public unitsPositions: Array<GridCell> = []
-
-
     public static yourIndex = 0
     public static opponentIndex = 1
-
-    public firstPlayer = false
 
 
     constructor() {
 
         super()
+    }
+
+
+    public updateIndexData(players: Array<PlayerBase>, yourId: string) {
+
+        players.forEach((item, index) => {
+
+            if (yourId == item.id) {
+
+                GameEngine.yourIndex = index
+
+            } else {
+
+                GameEngine.opponentIndex = index
+            }
+        })
     }
 
 
@@ -82,7 +84,7 @@ class GameEngine extends GameEngineAbstract {
 
     public updateUnitPosition(cell: GridCell, isOpponent: boolean) {
 
-        const index: number = isOpponent ? GameEngine.opponentIndex : GameEngine.yourIndex
+        const index: number = isOpponent ? 1 : 0
 
         this.unitsPositions[index] = cell
     }
@@ -90,11 +92,19 @@ class GameEngine extends GameEngineAbstract {
 
     public getUnitPosition(isOpponent: boolean): GridCell {
 
-        const index: number = isOpponent ? GameEngine.opponentIndex : GameEngine.yourIndex
+        const index: number = isOpponent ? 1 : 0
 
         return this.unitsPositions[index]
     }
 
+
+
+    public getStepType(distance: number): ACTION {
+
+        const condition: boolean = (distance > 1)
+
+        return condition ? ACTION.MOVE_DIAGONAL : ACTION.MOVE_SIMPLE
+    }
 
 
     public getMyEnergy(): number {
@@ -121,6 +131,14 @@ class GameEngine extends GameEngineAbstract {
     }
 
 
+    public getUserTrappedState(isOpponent: boolean): number {
+
+        const state: number = (isOpponent ? this.trapped[GameEngine.opponentIndex] : this.trapped[GameEngine.yourIndex])
+
+        return state
+    }
+
+
     public checkActionAvailability(action: ACTION): boolean {
 
         const energy: number = this.getMyEnergy()
@@ -130,6 +148,27 @@ class GameEngine extends GameEngineAbstract {
         return super.checkActionAvailability(action, energy, resources)
     }
 
+
+    public checkIfAnyActionAvailable(): boolean {
+
+        const energy: number = this.getMyEnergy()
+        const resources: Resources = this.getMyResources()
+
+        let state = false
+
+
+        for (const action of ACTIONS) {
+
+            state = state || super.checkActionAvailability(action, energy, resources)
+
+            if (state) {
+
+                break
+            }
+        }
+
+        return state
+    }
 
 
     private getScoreData(): string {
@@ -167,7 +206,7 @@ class GameEngine extends GameEngineAbstract {
     }
 
 
-    public getMessages(event: CUSTOM_EVENT): Partial<RenderGameOverScreenParameters> {
+    public getMessages(event: CUSTOM_EVENT, isWinner?: boolean): Partial<RenderGameOverScreenParameters> {
 
 
         let parameters: Partial<RenderGameOverScreenParameters> = {}
@@ -205,6 +244,19 @@ class GameEngine extends GameEngineAbstract {
                     startNewGame: () => window.location.reload(),
                     text,
                     title: TEXTS.GAME_OVER_MOVES_LIMIT
+                }
+
+                break
+
+            case CUSTOM_EVENT.GAME_OVER_WINNER:
+
+                parameters = {
+                    body: this.getScoreData(),
+                    buttonText: youWinner ? TEXTS.START_NEW_GAME : TEXTS.TRY_AGAIN,
+                    icon,
+                    startNewGame: () => window.location.reload(),
+                    text: isWinner ? TEXTS.GAME_OVER_YOU_WINNER : TEXTS.GAME_OVER_OPPONENT_WINNER,
+                    title: isWinner ? TEXTS.YOU_WIN : TEXTS.YOU_LOSE
                 }
 
                 break

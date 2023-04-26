@@ -1,5 +1,5 @@
 
-import { ACTION, BOULDER_SEGMENTS, BOULDER_WIDTHS, ENERGY, INIT_RESOURCES, ITEM, POINTS, RESOURCE, SETTINGS } from '../../common/constants'
+import { ACTION, BOULDER_SEGMENTS, BOULDER_WIDTHS, ENERGY, ITEM, POINTS, RESOURCE, SETTINGS, TILES_LAST_INDEX } from '../../common/constants'
 import { ActionParameters, GameEngineBase, GameRoomBase, GridCell, PlayerBase, Resources } from '../../common/interfaces'
 
 import ItemBase from '../../common/models/item_base'
@@ -43,6 +43,8 @@ class GameRoom implements GameRoomBase {
 
     public movesCounter = 0
     public isOver = false
+
+    public winner = ''
 
 
     public gameData: GameEngineBase
@@ -311,17 +313,79 @@ class GameRoom implements GameRoomBase {
     }
 
 
-    public updateTrappedState(id: string, value: number) {
+    public updateTrappedState(id: string, value: number, trappedByOpponent: boolean) {
 
-        //
+        const index: number = this.getPlayerIndexById(id)
+
+        if (trappedByOpponent) {
+
+            const opponent: PlayerBase | undefined = this.players.find((item: PlayerBase) => item.id != id)
+
+            if (opponent) {
+
+                this.updateScore(opponent.id, POINTS.USER_TRAPPED)
+            }
+
+        } else {
+
+            this.updateScore(id, -POINTS.TRAP)
+        }
+
+        this.useEnergy(id, this.gameData.energy[index])
+        this.gameData.trapped[index] = SETTINGS.TRAP_TURNS
     }
 
 
-    public checkTraps(id: string, position: GridCell): boolean {
+    public checkTraps(id: string, position: GridCell, isOpponent: boolean): boolean {
 
         let state = false
 
+        let index: number = this.getPlayerIndexById(id)
+
+        index = isOpponent ? index : (1 - index)
+
+        const userTraps: Array<GridCell> = this.gameData.traps[index]
+
+
+        for (const trap of userTraps) {
+
+            state = (trap.indexX == position.indexX)
+                && (trap.indexY == position.indexY)
+
+            if (state) {
+
+                break
+            }
+        }
+
         return state
+    }
+
+
+    public checkWinner(id: string, position: GridCell) {
+
+        const index: number = this.getPlayerIndexById(id)
+
+        let lastIndex: number = TILES_LAST_INDEX
+
+
+        if (index != this.firstPlayerIndex) {
+
+            lastIndex = -lastIndex
+        }
+
+        const condition: boolean = (position.indexY == lastIndex)
+
+        if (condition) {
+
+            this.winner = id
+            this.isOver = true
+
+            this.updateScore(id, POINTS.WINNER)
+
+            this.intervalHandler && clearInterval(this.intervalHandler)
+            this.timerCallback && this.timerCallback()
+        }
     }
 
 
@@ -352,10 +416,17 @@ class GameRoom implements GameRoomBase {
         this.useEnergy(id, energy)
 
 
-        if (this.checkTraps(id, position)) {
+        const trappedBySelf: boolean = this.checkTraps(id, position, false)
+        const trappedByOpponent: boolean = this.checkTraps(id, position, true)
 
-            this.updateTrappedState(id, SETTINGS.TRAP_TURNS)
+
+        if (trappedBySelf || trappedByOpponent) {
+
+            this.updateTrappedState(id, SETTINGS.TRAP_TURNS, trappedByOpponent)
         }
+
+
+        this.checkWinner(id, position)
 
 
         return this.getRoomData()
@@ -432,10 +503,31 @@ class GameRoom implements GameRoomBase {
     }
 
 
-    private intervalHandler: NodeJS.Timer | null = null
+    private trappedHandler() {
 
+        const id: string = this.currentTurnId
+        const index: number = this.getPlayerIndexById(this.currentTurnId)
+        const isTrapped: boolean = (this.gameData.trapped[index] > 0)
+
+        if (isTrapped) {
+
+            this.gameData.trapped[index] -= 1
+
+            if (this.gameData.trapped[index] > 0) {
+
+                this.useEnergy(id, this.gameData.energy[index])
+            }
+        }
+    }
+
+
+    private intervalHandler: NodeJS.Timer | null = null
+    private timerCallback: () => void = () => { /* */ }
 
     public startTimer(callback: () => void) {
+
+        this.timerCallback = callback
+
 
         this.intervalHandler = setInterval(() => {
 
@@ -446,10 +538,13 @@ class GameRoom implements GameRoomBase {
             this.gameData.moves[this.currentTurnIndex] = SETTINGS.TURN_MOVES
 
 
+            this.trappedHandler()
+
+
             this.movesCounter++
 
 
-            this.isOver = (this.movesCounter >= SETTINGS.TOTAL_MOVES)
+            this.isOver = this.isOver || (this.movesCounter >= SETTINGS.TOTAL_MOVES)
 
             if (this.isOver) {
 
@@ -477,7 +572,8 @@ class GameRoom implements GameRoomBase {
                 id: item.id,
                 name: item.name
             })),
-            roomNumber: this.roomNumber
+            roomNumber: this.roomNumber,
+            winner: this.winner
         }
     }
 }

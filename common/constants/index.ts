@@ -19,6 +19,7 @@ export enum ITEM {
     BOULDER = 'BOULDER',
     EMPTY = 'EMPTY',
     MUSHROOM = 'MUSHROOM',
+    TRAP = 'TRAP',
     TREE = 'TREE',
     UNIT = 'UNIT'
 }
@@ -35,6 +36,12 @@ export const BOULDER_SEGMENTS: Array<number> = [4, 6, 8]
 
 
 
+export const TILES_POSITIONS: Array<number> = [-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9]
+
+
+export const TILES_LAST_INDEX: number = Math.abs(TILES_POSITIONS[0])
+
+
 export enum RESOURCE {
     STONE = 'stone',
     WOOD = 'wood'
@@ -46,6 +53,8 @@ export enum POINTS {
     MOVE_SIMPLE = 10,
     RESOURCES = 15,
     TRAP = 50,
+    USER_TRAPPED = 100,
+    WINNER = 150
 }
 
 
@@ -66,7 +75,7 @@ export const INIT_RESOURCES: Resources = {
 
 export enum SETTINGS {
     ENERGY = 35,
-    TOTAL_MOVES = 4 * 2, // 30 * 2
+    TOTAL_MOVES = 17 * 2,
     TRAP_STONE = 2,
     TRAP_TURNS = 2,
     TRAP_WOOD = 3,
@@ -78,7 +87,17 @@ export enum SETTINGS {
 export enum ACTION {
     MOVE_DIAGONAL = 'MOVE_DIAGONAL',
     MOVE_SIMPLE = 'MOVE_SIMPLE',
+    NONE = 'NONE',
     STONE = 'STONE',
     TRAP = 'TRAP',
     WOOD = 'WOOD'
 }
+
+
+export const ACTIONS: Array<ACTION> = [
+    ACTION.MOVE_DIAGONAL,
+    ACTION.MOVE_SIMPLE,
+    ACTION.STONE,
+    ACTION.TRAP,
+    ACTION.WOOD
+]

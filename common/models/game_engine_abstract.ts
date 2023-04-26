@@ -22,6 +22,7 @@ class GameEngineAbstract implements GameEngineBase {
 
 
     public unitsPositions: Array<GridCell> = []
+    public trapsPositions: Array<GridCell> = []
 
 
     public firstPlayer = false
@@ -36,7 +37,7 @@ class GameEngineAbstract implements GameEngineBase {
     public init() {
 
         this.score = [0,0]
-        this.resources = [INIT_RESOURCES, INIT_RESOURCES]
+        this.resources = [{ ...INIT_RESOURCES }, { ...INIT_RESOURCES }]
 
         this.energy = [SETTINGS.ENERGY, SETTINGS.ENERGY]
         this.moves = [SETTINGS.TURN_MOVES, SETTINGS.TURN_MOVES]
@@ -74,13 +75,16 @@ class GameEngineAbstract implements GameEngineBase {
     public updateGameData(data: GameRoomBase) {
 
         const { gameData } = data
-        const { score, resources, energy, moves } = gameData
+        const { score, resources, energy, moves, trapped, traps } = gameData
 
         this.score = score
         this.resources = resources
 
         this.energy = energy
         this.moves = moves
+
+        this.trapped = trapped
+        this.traps = traps
 
         this.data = data
     }

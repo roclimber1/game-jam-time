@@ -2,6 +2,9 @@
 import * as THREE from 'three'
 
 
+import { TILES_LAST_INDEX, TILES_POSITIONS } from '../../common/constants'
+
+
 import Color from '../../common/models/color'
 import Item from './item'
 
@@ -9,9 +12,9 @@ import Item from './item'
 
 class Tile extends Item {
 
-    static positions: Array<number> = [-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9]
+    static positions: Array<number> = TILES_POSITIONS
 
-    static lastIndex: number = Math.abs(Tile.positions[0])
+    static lastIndex: number = TILES_LAST_INDEX
 
     static positionWidth = 65
 

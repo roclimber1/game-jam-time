@@ -174,12 +174,12 @@ class WebSocketServer {
             const performed: boolean = room?.performAction(data) as boolean
             const roomData: GameRoomBase | null = room ? room?.getRoomData() : null
 
+
             if (performed) {
 
                 this.io.to(roomId).emit(MESSAGE.ACTION, {
-                    roomData,
                     actionData: data,
-                    performed
+                    roomData
                 })
             }
         })
