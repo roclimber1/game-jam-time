@@ -123,7 +123,7 @@ class ControlPanel {
         ICONS.forEach((icon: ICON) => {
 
             const element: HTMLElement = document.getElementById(icon) as HTMLElement
-            const tokens: Array<string> = 'w-10/12 h-20 rounded-lg bg-slate-700 m-2 flex flex-row justify-center text-4xl items-center p-1'.split(' ')
+            const tokens: Array<string> = 'w-10/12 h-20 rounded-lg bg-slate-700 m-2 flex flex-row justify-center text-lg sm:text-4xl items-center p-1'.split(' ')
 
             element.classList.add(...tokens)
         })
@@ -138,7 +138,7 @@ class ControlPanel {
     }
 
 
-    private updateProgressBar(opponent: boolean) {
+    public updateProgressBar(opponent: boolean, wait?: boolean) {
 
         const element: HTMLElement = this.getProgressBarElement()
         const textBlock: HTMLElement = document.getElementById('progress-bar-text') as HTMLElement
@@ -159,7 +159,7 @@ class ControlPanel {
 
             if (textBlock) {
 
-                textBlock.innerHTML = 'Now your turn'
+                textBlock.innerHTML = wait ? 'You are trapped' : 'Now your turn'
             }
         }
     }
@@ -188,19 +188,15 @@ class ControlPanel {
     }
 
 
-    public startTimer(opponent = false) {
+    public startTimer(opponent = false, wait = false) {
 
         this.sigh = this.sigh * -1
 
 
-        this.updateProgressBar(opponent)
-
-
-        console.debug('🚀 ~ file: control_panel.ts:165 ~ ControlPanel ~ startTimer ~ opponent:', opponent)
+        this.updateProgressBar(opponent, wait)
 
 
         this.intervalHandler && clearInterval(this.intervalHandler)
-
         this.intervalHandler = setInterval(() => this.progressBarTick(), DEFAULT_TICK)
     }
 
@@ -329,7 +325,7 @@ class ControlPanel {
 
         const item: HTMLDivElement = this.addInfoBlock(parameters)
 
-        item.className = `${item.className} h-fit w-fit p-2 absolute flex justify-center rounded-lg bg-slate-800 opacity-80 text-3xl`
+        item.className = `${item.className} h-fit w-fit p-2 absolute flex justify-center rounded-lg bg-slate-800 opacity-80 text-lg sm:text-xl`
 
         const size = 120
 
@@ -346,7 +342,7 @@ class ControlPanel {
 
             const item: HTMLDivElement = this.addInfoBlock(parameters)
 
-            item.className = `${item.className} h-full w-full p-2 mr-3 flex flex-row justify-center items-center text-lg`
+            item.className = `${item.className} h-full w-full p-2 mr-3 flex flex-row justify-center items-center text-xs sm:text-lg`
 
             this.controls.bottomPanel.innerHTML = ''
             this.controls.bottomPanel.appendChild(item)

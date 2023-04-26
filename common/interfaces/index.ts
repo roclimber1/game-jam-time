@@ -21,7 +21,8 @@ export interface GameRoomBase {
     map: Array<GridCell>,
     movesCounter: number,
     players: Array<PlayerBase>,
-    roomNumber: number
+    roomNumber: number,
+    winner?: string
 }
 
 

@@ -98,6 +98,7 @@ class GameEngine extends GameEngineAbstract {
     }
 
 
+
     public getStepType(distance: number): ACTION {
 
         const condition: boolean = (distance > 1)
@@ -205,7 +206,7 @@ class GameEngine extends GameEngineAbstract {
     }
 
 
-    public getMessages(event: CUSTOM_EVENT): Partial<RenderGameOverScreenParameters> {
+    public getMessages(event: CUSTOM_EVENT, isWinner?: boolean): Partial<RenderGameOverScreenParameters> {
 
 
         let parameters: Partial<RenderGameOverScreenParameters> = {}
@@ -243,6 +244,19 @@ class GameEngine extends GameEngineAbstract {
                     startNewGame: () => window.location.reload(),
                     text,
                     title: TEXTS.GAME_OVER_MOVES_LIMIT
+                }
+
+                break
+
+            case CUSTOM_EVENT.GAME_OVER_WINNER:
+
+                parameters = {
+                    body: this.getScoreData(),
+                    buttonText: youWinner ? TEXTS.START_NEW_GAME : TEXTS.TRY_AGAIN,
+                    icon,
+                    startNewGame: () => window.location.reload(),
+                    text: isWinner ? TEXTS.GAME_OVER_YOU_WINNER : TEXTS.GAME_OVER_OPPONENT_WINNER,
+                    title: isWinner ? TEXTS.YOU_WIN : TEXTS.YOU_LOSE
                 }
 
                 break

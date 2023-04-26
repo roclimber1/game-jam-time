@@ -12,7 +12,7 @@ class Trap extends Item {
 
     static width = Math.round(Tile.positionWidth * 0.75)
 
-    static height = 10
+    static height = 15
     static activeHeight = 55
 
 

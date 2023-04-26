@@ -157,6 +157,19 @@ class Field extends Item {
     }
 
 
+    static getTileByIndexData(position: GridCell): GridCell {
+
+        const tile: GridCell = Field.grid.find((cell) => {
+
+            return (cell.indexX == position.indexX)
+                && (cell.indexY == position.indexY)
+
+        }) as GridCell
+
+        return tile
+    }
+
+
     static getStartTile(sign = 1): GridCell {
 
         const tile: GridCell = Field.grid.find(cell => (cell.indexX == 0) && (cell.indexY == sign * Field.lastIndex)) as GridCell

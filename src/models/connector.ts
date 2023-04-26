@@ -85,11 +85,18 @@ class Connector implements AbstractConnector {
             type: MESSAGE.TURN,
             callback: (data: GameRoomBase) => {
 
-                const { isOver } = data
+                const { isOver, winner } = data
 
                 if (isOver) {
 
-                    this.dispatchCustomEvent(CUSTOM_EVENT.GAME_OVER_MOVES_LIMIT, data)
+                    if (!winner) {
+
+                        this.dispatchCustomEvent(CUSTOM_EVENT.GAME_OVER_MOVES_LIMIT, data)
+
+                    } else {
+
+                        this.dispatchCustomEvent(CUSTOM_EVENT.GAME_OVER_WINNER, data)
+                    }
 
                 } else {
 
@@ -105,7 +112,7 @@ class Connector implements AbstractConnector {
                 const { id, type } = actionData
 
                 const condition: boolean = ((type == ACTION.TRAP)
-                    && (id != this.userId))
+                    && (id == this.userId))
                     || (type != ACTION.TRAP)
 
                 if (condition) {

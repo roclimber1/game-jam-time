@@ -53,6 +53,7 @@ type GameEventListeners = {
     handleGameConnect: GameEventHandler,
     handleGameOpponentFled: GameEventHandler,
     handleGameOverMovesLimit: GameEventHandler,
+    handleGameOverWinner: GameEventHandler,
     handleGameSetMap: GameEventHandler,
     handleGameTurn: GameEventHandler,
     handleMouseMove: (event: MouseEvent) => void
@@ -68,6 +69,7 @@ const gameEventListeners: GameEventListeners = {
     handleGameConnect: defaultGameEventHandler,
     handleGameOpponentFled: defaultGameEventHandler,
     handleGameOverMovesLimit: defaultGameEventHandler,
+    handleGameOverWinner: defaultGameEventHandler,
     handleGameSetMap: defaultGameEventHandler,
     handleGameTurn: defaultGameEventHandler,
     handleMouseMove: (event: MouseEvent) => { /* * */ }
@@ -228,7 +230,7 @@ class Game extends GameBase {
         waitingRoomBlock.innerHTML = ''
 
 
-        const parameters: Partial<RenderGameOverScreenParameters> = this.gameEngine.getMessages(event)
+        const parameters: Partial<RenderGameOverScreenParameters> = this.gameEngine.getMessages(event, isWinner)
 
 
         this.renderGameOverScreen({
@@ -270,6 +272,8 @@ class Game extends GameBase {
 
         document.removeEventListener(CUSTOM_EVENT.GAME_OVER_MOVES_LIMIT, gameEventListeners.handleGameOverMovesLimit)
 
+        document.removeEventListener(CUSTOM_EVENT.GAME_OVER_WINNER, gameEventListeners.handleGameOverWinner)
+
         document.removeEventListener(CUSTOM_EVENT.OPPONENT_FLED, gameEventListeners.handleGameOpponentFled)
 
         document.removeEventListener(CUSTOM_EVENT.SET_MAP, gameEventListeners.handleGameSetMap)
@@ -290,7 +294,7 @@ class Game extends GameBase {
 
     private addTrap(tile: GridCell, isActive: boolean) {
 
-        const trap: THREE.Mesh = new Trap(Game.zoom).render()
+        const trap: THREE.Mesh = new Trap(Game.zoom).render(isActive)
 
         trap.position.x = tile.centreX
         trap.position.y = tile.centreY
@@ -302,19 +306,49 @@ class Game extends GameBase {
         this.scene.add(trap)
     }
 
+    private trapsCells: Array<GridCell | null> = [null, null]
 
-    private updateTrappedView(isOpponent: boolean, tile: GridCell) {
+
+    private updateTrappedView(isOpponent: boolean) {
 
         const state: number = this.gameEngine.getUserTrappedState(isOpponent)
+        const unitPosition: GridCell = this.gameEngine.getUnitPosition(isOpponent)
+
+        const index = isOpponent ? 1 : 0
 
 
         if (state == SETTINGS.TRAP_TURNS) {
 
-            this.addTrap(tile, true)
+            this.addTrap(unitPosition, true)
 
-        } else if ((state == 0) && (tile.type == ITEM.TRAP)) {
+            this.trapsCells[index] = unitPosition
 
-            this.removeItem(tile)
+            !isOpponent && this.controlPanel.updateProgressBar(false, true)
+
+        } else if ((state == 0) && (this.trapsCells[index]?.type == ITEM.TRAP)) {
+
+            if (this.trapsCells[index]) {
+
+                const tile = Field.getTileByIndexData(this.trapsCells[index] as GridCell)
+
+                this.removeItem(tile)
+
+                this.trapsCells[index] = null
+            }
+        }
+
+
+        if ((state > 0) && !isOpponent) {
+
+            const parameters: AddInfoBlockParameters = {
+                autoRemove: false,
+                className: 'flex-col',
+                text: `<div>
+                    You were trapped. Should wait for release ${state} turn(s)
+                </div>`
+            }
+
+            this.controlPanel.updateBottomPanel(parameters)
         }
     }
 
@@ -338,10 +372,10 @@ class Game extends GameBase {
     }
 
 
-    private getPointsInfoBlock(energy: ENERGY) {
+    private getPointsInfoBlock(energy: ENERGY, text?: string) {
 
         return `<div>
-            You need <span class="text-indigo-500">${energy} points of energy</span>
+            You need <span class="text-indigo-500">${energy} points of energy</span> <span>${text ? text : ''}</span>
         </div>`
     }
 
@@ -361,11 +395,26 @@ class Game extends GameBase {
                 clientY
             }
 
+            const trappedData: number = this.gameEngine.getUserTrappedState(false)
+
+            if (trappedData > 0) {
+
+                return
+            }
+
 
             if (this.selectedTile) {
 
                 const unitPosition: GridCell = this.gameEngine.getUnitPosition(false)
                 const { distance, nearest: nearestTile } = Field.getDistanceBetweenTiles([this.selectedTile, unitPosition])
+
+
+                if (distance == 0) {
+
+                    this.controlPanel.clearBottomPanel()
+
+                    return
+                }
 
 
                 const isOpponent = this.isOpponentTurn()
@@ -413,13 +462,16 @@ class Game extends GameBase {
                         parameters = {
                             ...baseParameters,
                             text: `<div>
-                                    You could create a trap for your opponent
-                                </div>
+                                You could create a trap for your opponent
+                            </div>
 
-                                ${this.getPointsInfoBlock(ENERGY.TRAP)}
+                            ${this.getPointsInfoBlock(
+                                ENERGY.TRAP,
+                                `🪵-${SETTINGS.TRAP_WOOD} 🪨-${SETTINGS.TRAP_STONE} ⚡-${ENERGY.TRAP}`
+                            )}
 
-                                ${this.getAvailabilityBlock(available)(availabilityText)(baseText)}
-                                `
+                            ${this.getAvailabilityBlock(available)(availabilityText)(baseText)}
+                            `
                         } as AddInfoBlockParameters
                     }
                 } else {
@@ -488,7 +540,11 @@ class Game extends GameBase {
 
         gameEventListeners.handleClick = (event: MouseEvent) => {
 
-            if (this.isOpponentTurn()) {
+            const trappedData: number = this.gameEngine.getUserTrappedState(false)
+            const condition: boolean = this.isOpponentTurn()
+                || (trappedData > 0)
+
+            if (condition) {
 
                 return
             }
@@ -498,6 +554,12 @@ class Game extends GameBase {
 
                 const unitPosition: GridCell = this.gameEngine.getUnitPosition(false)
                 const { distance, nearest: nearestTile } = Field.getDistanceBetweenTiles([this.selectedTile, unitPosition])
+
+
+                if (distance <= 0.5) {
+
+                    return
+                }
 
 
                 let available = false
@@ -567,9 +629,9 @@ class Game extends GameBase {
 
 
             const isOpponent: boolean = this.isOpponentTurn()
+            const trappedData: number = this.gameEngine.getUserTrappedState(false)
 
-
-            this.controlPanel.startTimer(isOpponent)
+            this.controlPanel.startTimer(isOpponent, (trappedData > 0))
             this.controlPanel.updateMovesCounter(movesCounter)
 
 
@@ -577,6 +639,9 @@ class Game extends GameBase {
 
             this.updateLeftPanel()
             this.updateEnergyBar()
+
+            this.updateTrappedView(true)
+            this.updateTrappedView(false)
         }
 
 
@@ -602,11 +667,8 @@ class Game extends GameBase {
             }
 
 
-            const tile: GridCell = Field.getTileByUuid(position.id)
+            const tile: GridCell = Field.getTileByIndexData(position)
             const previousTile: GridCell = Field.getTileByCentrePosition(unit)
-
-            // TODO: trap logic
-
 
             this.updateRightPanel(isOpponent)
 
@@ -672,7 +734,12 @@ class Game extends GameBase {
                     break
             }
 
-            if (infoBlockParameters) {
+
+            this.updateTrappedView(true)
+            this.updateTrappedView(false)
+
+
+            if (infoBlockParameters && !isOpponent) {
 
                 this.controlPanel.addHoveringInfoBlock(infoBlockParameters as AddInfoBlockParameters)
             }
@@ -728,6 +795,19 @@ class Game extends GameBase {
         document.addEventListener(CUSTOM_EVENT.GAME_OVER_MOVES_LIMIT, gameEventListeners.handleGameOverMovesLimit)
 
 
+
+        gameEventListeners.handleGameOverWinner = (event: Event) => {
+
+            const { data } = (event as CustomEvent)?.detail || {}
+            const { winner } = data
+
+            const isWinner = (winner == this.connector.userId)
+
+            this.showGameOverScreen(isWinner, data as GameRoomBase, CUSTOM_EVENT.GAME_OVER_WINNER)
+        }
+
+
+        document.addEventListener(CUSTOM_EVENT.GAME_OVER_WINNER, gameEventListeners.handleGameOverWinner)
 
 
         gameEventListeners.handleGameOpponentFled = (event: Event) => {
@@ -811,6 +891,7 @@ class Game extends GameBase {
 
         const { isOver } = this.gameEngine?.data || {}
         const condition: boolean = isOver
+
 
         if (condition) {
 

@@ -164,11 +164,11 @@ class GameBase {
         const innerDiv: HTMLDivElement = document.createElement('div')
 
         innerDiv.className = 'flex flex-col justify-center items-center m-3'
-        innerDiv.innerHTML = `<div class="text-9xl">${icon}</div>
-        <div class="text-7xl m-3 p-3 text-center">${title}</div>
+        innerDiv.innerHTML = `<div class="text-2xl sm:text-5xl">${icon}</div>
+        <div class="text-2xl sm:text-5xl m-3 p-3 text-center">${title}</div>
 
-        <div class="m-3 p-3 text-2xl">${text}</div>
-        <div class="m-3 p-3 text-2xl">${body}</div>`
+        <div class="m-3 p-3 text-lg sm:text-2xl">${text}</div>
+        <div class="m-3 p-3 text-lg sm:text-2xl">${body}</div>`
 
 
         const button: HTMLButtonElement = document.createElement('button')
