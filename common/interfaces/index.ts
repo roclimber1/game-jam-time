@@ -85,3 +85,10 @@ export interface ActionParameters {
     position: GridCell,
     type: ACTION
 }
+
+
+export type ActionData = {
+    actionData: DataWIthRoomNumber<ActionParameters>,
+    performed?: boolean,
+    roomData: GameRoomBase
+}

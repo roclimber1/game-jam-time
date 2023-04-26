@@ -19,6 +19,7 @@ export enum ITEM {
     BOULDER = 'BOULDER',
     EMPTY = 'EMPTY',
     MUSHROOM = 'MUSHROOM',
+    TRAP = 'TRAP',
     TREE = 'TREE',
     UNIT = 'UNIT'
 }
@@ -78,7 +79,17 @@ export enum SETTINGS {
 export enum ACTION {
     MOVE_DIAGONAL = 'MOVE_DIAGONAL',
     MOVE_SIMPLE = 'MOVE_SIMPLE',
+    NONE = 'NONE',
     STONE = 'STONE',
     TRAP = 'TRAP',
     WOOD = 'WOOD'
 }
+
+
+export const ACTIONS: Array<ACTION> = [
+    ACTION.MOVE_DIAGONAL,
+    ACTION.MOVE_SIMPLE,
+    ACTION.STONE,
+    ACTION.TRAP,
+    ACTION.WOOD
+]

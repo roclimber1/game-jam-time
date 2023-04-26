@@ -27,11 +27,17 @@ export type RenderGameOverScreenParameters = {
 }
 
 
+export type Position = {
+    clientX: number,
+    clientY: number
+}
+
 
 export type AddInfoBlockParameters = {
     autoRemove?: boolean,
     autoRemoveTimeout?: number,
     className?: string,
     icon?: string,
+    position?: Position,
     text: string
 }

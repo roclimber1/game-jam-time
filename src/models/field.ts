@@ -15,6 +15,12 @@ import type { GridCell } from '../../common/interfaces'
 
 
 
+type GetDistanceBetweenTiles = {
+    distance: number,
+    nearest: boolean
+}
+
+
 
 class Field extends Item {
 
@@ -43,25 +49,42 @@ class Field extends Item {
     }
 
 
-    public findClosestTile() {
+    static checkNearestTile(cells: Array<GridCell>): GetDistanceBetweenTiles {
 
-        //
-    }
-
-
-    static checkNearestTile(selectedCell: GridCell, unit: THREE.Group): boolean {
-
-        const xDiff: number = Math.abs(selectedCell.centreX) - Math.abs(unit.position.x)
-        const yDiff: number = Math.abs(selectedCell.centreY) - Math.abs(unit.position.y)
+        const xDiff: number = cells[0]?.centreX - cells[1].centreX
+        const yDiff: number = cells[0]?.centreY - cells[1].centreY
 
         const distance: number = Math.sqrt(Math.pow(xDiff, 2) + Math.pow(yDiff, 2))
 
         const maxDistance: number = Math.sqrt(2 * Math.pow(Tile.positionWidth * Field.zoom, 2)) + 3
 
-        const nearestTile: boolean = (distance <= maxDistance)
+        const nearest: boolean = (distance <= maxDistance)
 
 
-        return nearestTile
+        return {
+            distance,
+            nearest
+        }
+    }
+
+
+
+    static getDistanceBetweenTiles(cells: Array<GridCell>): GetDistanceBetweenTiles {
+
+        const xDiff: number = cells[0]?.indexX - cells[1]?.indexX
+        const yDiff: number = cells[0]?.indexY - cells[1]?.indexY
+
+
+        const distance: number = Math.sqrt(Math.pow(xDiff, 2) + Math.pow(yDiff, 2))
+
+        const maxDistance: number = Math.sqrt(2) + 0.1
+
+        const nearest: boolean = (distance <= maxDistance)
+
+        return {
+            distance,
+            nearest
+        }
     }
 
 
@@ -92,7 +115,10 @@ class Field extends Item {
 
     static getTileByUuid(uuid: string): GridCell {
 
-        const tile: GridCell = Field.grid.find((cell) => cell.id === uuid) as GridCell
+        const tile: GridCell = Field.grid.find((cell) => {
+
+            return (cell.id === uuid)
+        }) as GridCell
 
         return tile
     }

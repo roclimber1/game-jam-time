@@ -10,7 +10,7 @@ import Mushroom from './mushroom'
 import Boulder from './boulder'
 
 import Item from './item'
-import Tile from './tile'
+import Trap from './trap'
 import Field from './field'
 
 
@@ -27,14 +27,14 @@ import Connector from './connector'
 import ControlPanel from './control_panel'
 
 
-import { CUSTOM_EVENT } from '../constants'
-import { ACTION, ITEM, ENERGY } from '../../common/constants'
+import { CUSTOM_EVENT, ICON } from '../constants'
+import { ACTION, ITEM, ENERGY, SETTINGS, RESOURCE } from '../../common/constants'
 
 
 
 
-import type { GridCell, GameEngineBase, TreeParameters, BoulderParameters, GameRoomBase } from '@/common/interfaces'
-import type { AddInfoBlockParameters, RenderGameOverScreenParameters } from '../interfaces'
+import type { GridCell, GameEngineBase, TreeParameters, BoulderParameters, GameRoomBase, ActionData, Resources } from '@/common/interfaces'
+import type { AddInfoBlockParameters, Position, RenderGameOverScreenParameters } from '../interfaces'
 
 
 
@@ -49,12 +49,13 @@ type GameEventHandler = (event: Event) => void
 
 type GameEventListeners = {
     handleClick: (event: MouseEvent) => void,
+    handleGameAction: GameEventHandler,
     handleGameConnect: GameEventHandler,
     handleGameOpponentFled: GameEventHandler,
     handleGameOverMovesLimit: GameEventHandler,
     handleGameSetMap: GameEventHandler,
     handleGameTurn: GameEventHandler,
-    handleMouseMove: (event: MouseEvent) => void,
+    handleMouseMove: (event: MouseEvent) => void
 }
 
 
@@ -63,6 +64,7 @@ const defaultGameEventHandler: GameEventHandler = (event) => { /* * */ }
 
 const gameEventListeners: GameEventListeners = {
     handleClick: (event: MouseEvent) => { /* * */ },
+    handleGameAction: defaultGameEventHandler,
     handleGameConnect: defaultGameEventHandler,
     handleGameOpponentFled: defaultGameEventHandler,
     handleGameOverMovesLimit: defaultGameEventHandler,
@@ -128,7 +130,6 @@ class Game extends GameBase {
         this.renderer.render(this.scene, this.camera)
 
 
-        // this.miniGame = new MiniGame()
         this.gameEngine = new GameEngine()
 
         this.gameData = this.gameEngine.getGameData()
@@ -137,6 +138,20 @@ class Game extends GameBase {
         this.controlPanel = new ControlPanel(connector)
 
         this.controlPanel.hideProgressBarPanel()
+
+
+
+        this.reInitRayCaster()
+
+        window.onresize = () => this.resizeListener()
+    }
+
+
+    private reInitRayCaster() {
+
+        this.initRayCaster(this.onPointerMove.bind(this))
+
+        this.renderer.setAnimationLoop(this.animation.bind(this))
     }
 
 
@@ -150,10 +165,6 @@ class Game extends GameBase {
 
 
         this.scene.add(this.opponent)
-
-        this.initRayCaster(this.onPointerMove.bind(this))
-
-        this.renderer.setAnimationLoop(this.animation.bind(this))
     }
 
 
@@ -162,6 +173,46 @@ class Game extends GameBase {
         this.scene.remove(cell.item as THREE.Object3D)
 
         Field.removeItemFromTile(cell)
+    }
+
+
+    private updateRightPanel(isOpponent: boolean) {
+
+        let available: boolean = this.gameEngine.checkActionAvailability(ACTION.WOOD) && !isOpponent
+
+        this.controlPanel.updateIcon(ICON.WOOD_GATHERING, !available)
+
+        available = this.gameEngine.checkActionAvailability(ACTION.STONE) && !isOpponent
+
+        this.controlPanel.updateIcon(ICON.STONE_GATHERING, !available)
+
+        available = (this.gameEngine.checkActionAvailability(ACTION.MOVE_DIAGONAL)
+            || this.gameEngine.checkActionAvailability(ACTION.MOVE_SIMPLE))
+            && !isOpponent
+
+        this.controlPanel.updateIcon(ICON.MOVE, !available)
+
+        available = this.gameEngine.checkActionAvailability(ACTION.TRAP) && !isOpponent
+
+        this.controlPanel.updateIcon(ICON.TRAP, !available)
+    }
+
+
+    private updateLeftPanel() {
+
+        const resources: Resources = this.gameEngine.getMyResources()
+
+        this.controlPanel.updateIcon(ICON.STONE, (resources[RESOURCE.STONE] == 0), resources[RESOURCE.STONE])
+
+        this.controlPanel.updateIcon(ICON.WOOD, (resources[RESOURCE.WOOD] == 0), resources[RESOURCE.WOOD])
+    }
+
+
+    private updateEnergyBar() {
+
+        const energy: number = this.gameEngine.getMyEnergy()
+
+        this.controlPanel.updateEnergyCounter(energy)
     }
 
 
@@ -202,6 +253,8 @@ class Game extends GameBase {
     }
 
 
+    private clearBottomPanelTimeout: NodeJS.Timeout | null = null
+
 
     private removeEventListeners() {
 
@@ -210,6 +263,8 @@ class Game extends GameBase {
         document.removeEventListener('click', gameEventListeners.handleClick)
 
         document.removeEventListener(CUSTOM_EVENT.TURN, gameEventListeners.handleGameTurn)
+
+        document.removeEventListener(CUSTOM_EVENT.ACTION, gameEventListeners.handleGameAction)
 
         document.removeEventListener(CUSTOM_EVENT.CONNECT, gameEventListeners.handleGameConnect)
 
@@ -221,17 +276,47 @@ class Game extends GameBase {
     }
 
 
-    private isOpponentTurn(): boolean {
+    private isOpponentTurn(id: string | null = null): boolean {
 
-        const { currentTurnId } = this.gameEngine.data
+        const { currentTurnId } = this.gameEngine?.data || {}
+        const userId: string = id ? id : currentTurnId
 
-        const isOpponent: boolean = (currentTurnId != this.connector.userId)
+        const isOpponent: boolean = (userId != this.connector.userId)
 
 
         return isOpponent
     }
 
 
+    private addTrap(tile: GridCell, isActive: boolean) {
+
+        const trap: THREE.Mesh = new Trap(Game.zoom).render()
+
+        trap.position.x = tile.centreX
+        trap.position.y = tile.centreY
+
+        tile.item = trap
+        tile.occupied = false
+        tile.type = ITEM.TRAP
+
+        this.scene.add(trap)
+    }
+
+
+    private updateTrappedView(isOpponent: boolean, tile: GridCell) {
+
+        const state: number = this.gameEngine.getUserTrappedState(isOpponent)
+
+
+        if (state == SETTINGS.TRAP_TURNS) {
+
+            this.addTrap(tile, true)
+
+        } else if ((state == 0) && (tile.type == ITEM.TRAP)) {
+
+            this.removeItem(tile)
+        }
+    }
 
 
     private getAvailabilityBlock(available: boolean) {
@@ -261,7 +346,7 @@ class Game extends GameBase {
     }
 
 
-    private hoverItem!: HTMLElement
+    private mousePosition!: Position
 
 
     private initEventListeners() {
@@ -269,12 +354,18 @@ class Game extends GameBase {
 
         gameEventListeners.handleMouseMove = (event: MouseEvent) => {
 
-            // '⛏️🪓⚒️🔨🛠️🔧🪜🛡️🪚🏹🗡️⚔️💣🪙⏳👣'
+            const { clientX, clientY } = event
+
+            this.mousePosition = {
+                clientX,
+                clientY
+            }
 
 
             if (this.selectedTile) {
 
-                const nearestTile: boolean = Field.checkNearestTile(this.selectedTile, this.unit)
+                const unitPosition: GridCell = this.gameEngine.getUnitPosition(false)
+                const { distance, nearest: nearestTile } = Field.getDistanceBetweenTiles([this.selectedTile, unitPosition])
 
 
                 const isOpponent = this.isOpponentTurn()
@@ -282,7 +373,7 @@ class Game extends GameBase {
                 let parameters: AddInfoBlockParameters | null = null
                 let available: boolean
 
-                const availabilityText: string = (isOpponent ? 'It isn\'t available now. Wait for your turn' : 'You have not enough energy')
+                let availabilityText: string = (isOpponent ? 'It isn\'t available now. Wait for your turn' : 'You have not enough energy')
 
 
                 const baseParameters: Partial<AddInfoBlockParameters> = {
@@ -298,7 +389,10 @@ class Game extends GameBase {
 
                     if (nearestTile) {
 
-                        available = this.gameEngine.checkActionAvailability(ACTION.MOVE_SIMPLE) && !isOpponent
+                        const stepType: ACTION = this.gameEngine.getStepType(distance)
+                        const energy: ENERGY = (stepType == ACTION.MOVE_SIMPLE) ? ENERGY.MOVE_SIMPLE : ENERGY.MOVE_DIAGONAL
+
+                        available = this.gameEngine.checkActionAvailability(stepType) && !isOpponent
 
                         parameters = {
                             ...baseParameters,
@@ -306,7 +400,7 @@ class Game extends GameBase {
                                     You could move here
                                 </div>
 
-                                ${this.getPointsInfoBlock(ENERGY.MOVE_SIMPLE)}
+                                ${this.getPointsInfoBlock(energy)}
 
                                 ${this.getAvailabilityBlock(available)(availabilityText)(baseText)}
                                 `
@@ -332,12 +426,14 @@ class Game extends GameBase {
 
                     const baseText = 'You could gather it'
 
+                    availabilityText = nearestTile ? availabilityText : 'You couldn\'t reach it'
+
 
                     switch (this.selectedTile.type) {
 
                         case ITEM.BOULDER:
 
-                            available = this.gameEngine.checkActionAvailability(ACTION.STONE) && !isOpponent
+                            available = this.gameEngine.checkActionAvailability(ACTION.STONE) && !isOpponent && nearestTile
 
                             parameters = {
                                 ...baseParameters,
@@ -355,7 +451,7 @@ class Game extends GameBase {
 
                         case ITEM.TREE:
 
-                            available = this.gameEngine.checkActionAvailability(ACTION.WOOD) && !isOpponent
+                            available = this.gameEngine.checkActionAvailability(ACTION.WOOD) && !isOpponent && nearestTile
 
                             parameters = {
                                 ...baseParameters,
@@ -380,6 +476,10 @@ class Game extends GameBase {
                 }
 
             }
+
+            this.clearBottomPanelTimeout && clearTimeout(this.clearBottomPanelTimeout)
+
+            this.clearBottomPanelTimeout = setTimeout(() => this.controlPanel.clearBottomPanel(), 5000)
         }
 
 
@@ -396,8 +496,12 @@ class Game extends GameBase {
 
             if (this.selectedTile) {
 
+                const unitPosition: GridCell = this.gameEngine.getUnitPosition(false)
+                const { distance, nearest: nearestTile } = Field.getDistanceBetweenTiles([this.selectedTile, unitPosition])
 
-                const nearestTile: boolean = Field.checkNearestTile(this.selectedTile, this.unit)
+
+                let available = false
+                let action: ACTION = ACTION.NONE
 
 
 
@@ -406,28 +510,47 @@ class Game extends GameBase {
 
                     if (nearestTile) {
 
-                        this.unit.position.set(this.selectedTile.centreX, this.selectedTile.centreY, this.unit.position.z)
+                        action = this.gameEngine.getStepType(distance)
+
+                    } else {
+
+                        action = ACTION.TRAP
                     }
+
                 } else {
 
-                    switch (this.selectedTile.type) {
+                    if (nearestTile) {
 
-                        case ITEM.BOULDER:
+                        switch (this.selectedTile.type) {
 
-                            this.removeItem(this.selectedTile)
+                            case ITEM.BOULDER:
 
-                            this.controlPanel.addHoveringInfoBlock(event)({ icon: '🪨', text: '+1' })
+                                action = ACTION.STONE
 
-                            break
+                                break
 
-                        case ITEM.TREE:
+                            case ITEM.TREE:
 
-                            this.removeItem(this.selectedTile)
 
-                            this.controlPanel.addHoveringInfoBlock(event)({ icon: '🪵', text: '+1' })
+                                action = ACTION.WOOD
 
-                            break
+                                break
+                        }
                     }
+                }
+
+                if (action != ACTION.NONE) {
+
+                    available = this.gameEngine.checkActionAvailability(action)
+                }
+
+                if (available) {
+
+                    this.connector.sendAction({
+                        id: this.connector.userId,
+                        position: this.selectedTile,
+                        type: action
+                    })
                 }
             }
         }
@@ -438,8 +561,7 @@ class Game extends GameBase {
         gameEventListeners.handleGameTurn = (event: Event) => {
 
             const { data } = (event as CustomEvent)?.detail || {}
-            const { movesCounter } = data
-
+            const { movesCounter } = data as GameRoomBase
 
             this.gameEngine.updateGameData(data)
 
@@ -449,17 +571,125 @@ class Game extends GameBase {
 
             this.controlPanel.startTimer(isOpponent)
             this.controlPanel.updateMovesCounter(movesCounter)
+
+
+            this.updateRightPanel(isOpponent)
+
+            this.updateLeftPanel()
+            this.updateEnergyBar()
         }
 
 
         document.addEventListener(CUSTOM_EVENT.TURN, gameEventListeners.handleGameTurn)
 
 
+        gameEventListeners.handleGameAction = (event: Event) => {
+
+            const { data } = (event as CustomEvent)?.detail || {}
+            const { actionData, roomData } = data as ActionData
+
+            const { id, position, type } = actionData
+            const { centreX, centreY } = position
+
+            this.gameEngine.updateGameData(roomData)
+
+
+            const isOpponent: boolean = this.isOpponentTurn(id)
+            const unit = isOpponent ? this.opponent : this.unit
+
+            let infoBlockParameters: Partial<AddInfoBlockParameters> = {
+                position: this.mousePosition
+            }
+
+
+            const tile: GridCell = Field.getTileByUuid(position.id)
+            const previousTile: GridCell = Field.getTileByCentrePosition(unit)
+
+            // TODO: trap logic
+
+
+            this.updateRightPanel(isOpponent)
+
+            this.updateLeftPanel()
+            this.updateEnergyBar()
+
+
+            switch (type) {
+
+                case ACTION.MOVE_DIAGONAL:
+
+                    // break omitted intentionally
+
+                case ACTION.MOVE_SIMPLE:
+
+                    unit.position.set(centreX, centreY, unit.position.z)
+
+                    tile.occupied = true
+                    tile.type = ITEM.UNIT
+
+                    Field.removeItemFromTile(previousTile)
+
+                    infoBlockParameters = {
+                        ...infoBlockParameters,
+                        text: `⚡-${(type == ACTION.MOVE_SIMPLE) ? ENERGY.MOVE_SIMPLE : ENERGY.MOVE_DIAGONAL}`
+                    }
+
+                    this.gameEngine.updateUnitPosition(tile, isOpponent)
+
+                    break
+
+                case ACTION.STONE:
+
+                    this.removeItem(tile)
+
+                    infoBlockParameters = {
+                        ...infoBlockParameters,
+                        text: `🪨+1 ⚡-${ENERGY.STONE}`
+                    }
+
+                    break
+
+                case ACTION.WOOD:
+
+                    this.removeItem(tile)
+
+                    infoBlockParameters = {
+                        ...infoBlockParameters,
+                        text: `🪵+1 ⚡-${ENERGY.WOOD}`
+                    }
+
+                    break
+
+                case ACTION.TRAP:
+
+                    this.addTrap(tile, false)
+
+                    infoBlockParameters = {
+                        ...infoBlockParameters,
+                        text: `🪵-${SETTINGS.TRAP_WOOD} 🪨-${SETTINGS.TRAP_STONE} ⚡-${ENERGY.TRAP}`
+                    }
+
+                    break
+            }
+
+            if (infoBlockParameters) {
+
+                this.controlPanel.addHoveringInfoBlock(infoBlockParameters as AddInfoBlockParameters)
+            }
+        }
+
+
+        document.addEventListener(CUSTOM_EVENT.ACTION, gameEventListeners.handleGameAction)
+
+
 
         gameEventListeners.handleGameConnect = (event: Event) => {
 
             const { data } = (event as CustomEvent)?.detail || {}
-            const { currentTurnId } = data
+            const { currentTurnId, players } = data as GameRoomBase
+
+            this.gameEngine.updateIndexData(players, this.connector.userId)
+            this.gameEngine.updateGameData(data)
 
 
             this.gameData.firstPlayer = this.gameEngine.updateFirstPlayer(this.connector.userId, currentTurnId)
@@ -539,6 +769,7 @@ class Game extends GameBase {
 
                 this.initOpponent()
 
+
                 this.controlPanel.showProgressBarPanel()
 
 
@@ -566,17 +797,20 @@ class Game extends GameBase {
         this.camera.aspect = innerWidth / innerHeight
         this.camera.updateProjectionMatrix()
 
+
         this.controls.update()
 
 
         this.renderer.setSize(innerWidth, innerHeight)
+
+        this.reInitRayCaster()
     }
 
 
     public animation() {
 
         const { isOver } = this.gameEngine?.data || {}
-        const condition: boolean = isOver // || this.isOpponentTurn()
+        const condition: boolean = isOver
 
         if (condition) {
 
@@ -620,7 +854,11 @@ class Game extends GameBase {
 
 
                 this.previous.currentHex = this.previous.material.emissive.getHex()
-                this.previous.material.emissive.setHex(Color.selection)
+
+                const available: boolean = this.gameEngine.checkIfAnyActionAvailable()
+                const color: number = (available ? Color.selection.available : Color.selection.unavailable)
+
+                this.previous.material.emissive.setHex(color)
             }
 
         } else {
@@ -667,19 +905,7 @@ class Game extends GameBase {
 
         this.controls = new OrbitControls(camera, this.renderer.domElement)
 
-        document.addEventListener('resize', this.resizeListener.bind(this))
-
         return camera
-    }
-
-
-    private reInitCamera(position: THREE.Vector3) {
-
-        this.scene.remove(this.camera)
-
-        document.removeEventListener('resize', this.resizeListener.bind(this))
-
-        return this.initCamera(position)
     }
 
 

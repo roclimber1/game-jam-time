@@ -36,7 +36,7 @@ class GameEngineAbstract implements GameEngineBase {
     public init() {
 
         this.score = [0,0]
-        this.resources = [INIT_RESOURCES, INIT_RESOURCES]
+        this.resources = [{ ...INIT_RESOURCES }, { ...INIT_RESOURCES }]
 
         this.energy = [SETTINGS.ENERGY, SETTINGS.ENERGY]
         this.moves = [SETTINGS.TURN_MOVES, SETTINGS.TURN_MOVES]

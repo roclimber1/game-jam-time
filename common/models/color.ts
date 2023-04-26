@@ -1,5 +1,10 @@
 
 
+type Selection = {
+    available: number,
+    unavailable: number
+}
+
 
 class Color {
 
@@ -15,7 +20,11 @@ class Color {
 
     static ground = 0x99C846
 
-    static selection = 0xff6969
+    static selection: Selection = {
+        available: 0x65a30d,
+        unavailable: 0xc2410c
+    }
+
     static lastLine = 0x882000
 
 

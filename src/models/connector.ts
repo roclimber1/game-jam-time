@@ -1,6 +1,6 @@
 
 
-import { MESSAGE } from '../../common/constants'
+import { ACTION, MESSAGE } from '../../common/constants'
 import { CUSTOM_EVENT } from '../constants'
 
 import WebSocketClient from './web_socket_client'
@@ -8,7 +8,7 @@ import WebSocketClient from './web_socket_client'
 
 
 import type { AbstractConnector, Listener } from '../interfaces'
-import type { ChatMessage, DataWIthRoomNumber, GameRoomBase, GridCell, ActionParameters } from '../../common/interfaces'
+import type { ChatMessage, DataWIthRoomNumber, GameRoomBase, GridCell, ActionParameters, ActionData } from '../../common/interfaces'
 
 
 
@@ -94,6 +94,23 @@ class Connector implements AbstractConnector {
                 } else {
 
                     this.dispatchCustomEvent(CUSTOM_EVENT.TURN, data)
+                }
+            }
+        },
+        {
+            type: MESSAGE.ACTION,
+            callback: (data: ActionData) => {
+
+                const { actionData } = data
+                const { id, type } = actionData
+
+                const condition: boolean = ((type == ACTION.TRAP)
+                    && (id != this.userId))
+                    || (type != ACTION.TRAP)
+
+                if (condition) {
+
+                    this.dispatchCustomEvent(CUSTOM_EVENT.ACTION, data)
                 }
             }
         }

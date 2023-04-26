@@ -1,7 +1,7 @@
 
 
 import { SETTINGS } from '../../common/constants'
-import { ICON } from '../constants'
+import { ICON, ICONS } from '../constants'
 
 
 
@@ -37,16 +37,6 @@ enum ELEMENT {
     CHAT_BUTTON = 'chat-button',
     CHAT_INPUT = 'chat-input'
 }
-
-
-const ICONS: Array<ICON> = [
-    ICON.MOVE,
-    ICON.STONE,
-    ICON.STONE_GATHERING,
-    ICON.TRAP,
-    ICON.WOOD,
-    ICON.WOOD_GATHERING
-]
 
 
 const DEFAULT_TICK = 100
@@ -133,16 +123,16 @@ class ControlPanel {
         ICONS.forEach((icon: ICON) => {
 
             const element: HTMLElement = document.getElementById(icon) as HTMLElement
-            const tokens: Array<string> = 'w-20 h-20 rounded-lg bg-slate-700 m-2 flex flex-row justify-center text-4xl items-center'.split(' ')
+            const tokens: Array<string> = 'w-10/12 h-20 rounded-lg bg-slate-700 m-2 flex flex-row justify-center text-4xl items-center p-1'.split(' ')
 
             element.classList.add(...tokens)
         })
     }
 
 
-    private getProgressBarElement(selector = '.progress-content', baseClass = 'progress-bar'): HTMLElement {
+    private getProgressBarElement(selector = '.progress-content', baseId = 'progress-bar'): HTMLElement {
 
-        const element: HTMLElement = document.getElementById(baseClass)?.querySelector(selector) as HTMLElement
+        const element: HTMLElement = document.getElementById(baseId)?.querySelector(selector) as HTMLElement
 
         return element
     }
@@ -223,12 +213,12 @@ class ControlPanel {
     }
 
 
-    private updateCircularBar(initValue: number, totalValue: number, className: string) {
+    private updateCircularBar(initValue: number, totalValue: number, baseId: string) {
 
         let value: number = initValue
 
 
-        const element: HTMLElement = this.getProgressBarElement('.progress-content > circle', className)
+        const element: HTMLElement = this.getProgressBarElement('.progress-content > circle', baseId)
 
 
         if (value < 0) {
@@ -303,7 +293,7 @@ class ControlPanel {
     }
 
 
-    public updateIcon(icon: ICON, grayscale: boolean, value: number) {
+    public updateIcon(icon: ICON, grayscale: boolean, value?: number) {
 
         const element: HTMLElement = document.getElementById(icon) as HTMLElement
         const counter: HTMLElement | null = element.querySelector('.icon-text')
@@ -333,23 +323,20 @@ class ControlPanel {
     }
 
 
-    public addHoveringInfoBlock(event: MouseEvent) {
+    public addHoveringInfoBlock(parameters: AddInfoBlockParameters) {
 
-        return (parameters: AddInfoBlockParameters) => {
+        const { clientX = 0, clientY = 0 } = parameters?.position || {}
 
-            const { clientX, clientY } = event
+        const item: HTMLDivElement = this.addInfoBlock(parameters)
 
-            const item: HTMLDivElement = this.addInfoBlock(parameters)
+        item.className = `${item.className} h-fit w-fit p-2 absolute flex justify-center rounded-lg bg-slate-800 opacity-80 text-3xl`
 
-            item.className = `${item.className} h-fit w-fit p-2 absolute flex justify-center rounded-lg bg-slate-800 opacity-80 text-3xl`
+        const size = 120
 
-            const size = 120
+        item.style.left = Math.round(clientX - size / 2) + 'px'
+        item.style.top = Math.round(clientY - size / 2) + 'px'
 
-            item.style.left = Math.round(clientX - size / 2) + 'px'
-            item.style.top = Math.round(clientY - size / 2) + 'px'
-
-            document.body.appendChild(item)
-        }
+        document.body.appendChild(item)
     }
 
 

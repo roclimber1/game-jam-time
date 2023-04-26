@@ -1,6 +1,7 @@
 
 
 export enum CUSTOM_EVENT {
+    ACTION = 'ACTION',
     CONNECT = 'CONNECT',
     GAME_OVER_MOVES_LIMIT = 'GAME_OVER_MOVES_LIMIT',
     OPPONENT = 'OPPONENT',
@@ -38,3 +39,15 @@ export enum ICON {
     WOOD = 'icon-wood',
     WOOD_GATHERING = 'icon-wood-gathering'
 }
+
+
+
+
+export const ICONS: Array<ICON> = [
+    ICON.MOVE,
+    ICON.STONE,
+    ICON.STONE_GATHERING,
+    ICON.TRAP,
+    ICON.WOOD,
+    ICON.WOOD_GATHERING
+]
