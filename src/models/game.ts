@@ -631,6 +631,7 @@ class Game extends GameBase {
             const isOpponent: boolean = this.isOpponentTurn()
             const trappedData: number = this.gameEngine.getUserTrappedState(false)
 
+            this.controlPanel.stopTimer()
             this.controlPanel.startTimer(isOpponent, (trappedData > 0))
             this.controlPanel.updateMovesCounter(movesCounter)
 
